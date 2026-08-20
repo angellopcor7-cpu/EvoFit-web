@@ -15,6 +15,7 @@ import {
   Plus,
   Play,
   Timer,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
@@ -28,7 +29,7 @@ import {
 } from "@/components/ui/Dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
 import { useWorkoutRoutines } from "@/hooks/useWorkoutRoutines";
-import { useUserRoutines } from "@/hooks/useUserRoutines";
+import { useUserRoutines, useDeleteUserRoutine } from "@/hooks/useUserRoutines";
 import type { WorkoutCategory, WorkoutRoutine } from "@/lib/workouts";
 import type { UserRoutine } from "@/lib/userRoutines";
 import styles from "./page.module.css";
@@ -40,6 +41,25 @@ const LEVEL_LABEL: Record<string, string> = {
   intermedio: "Intermedio",
   avanzado: "Avanzado",
   todos: "Todos los niveles",
+};
+
+const LEVEL_ORDER = ["principiante", "intermedio", "avanzado", "todos"];
+
+const SPLIT_TYPE_LABEL: Record<string, string> = {
+  fullbody: "Full body",
+  ab: "A/B",
+  abc: "A/B/C",
+  grupo_muscular: "Por grupo muscular",
+  sesion: "Sesión",
+};
+
+// Orden de despliegue de los botones de grupo/bloque para las categorías
+// donde el day_label realmente representa un grupo que se repite entre
+// niveles (musculación y calistenia). El resto de categorías (sesiones
+// tipo clase) no usan este filtro porque cada day_label ahí es único.
+const GROUP_ORDER: Partial<Record<UiCategory, string[]>> = {
+  musculacion: ["Full Body", "Pecho", "Espalda", "Piernas", "Hombros", "Brazos", "Abdomen"],
+  calistenia: ["Full Body A", "Full Body B", "Tren superior", "Tren inferior y core"],
 };
 
 type UiCategory =
@@ -108,24 +128,74 @@ function RoutineCard({
   title,
   meta,
   onSelect,
+  onDelete,
 }: {
   title: string;
   meta: string;
   onSelect: () => void;
+  onDelete?: () => void;
 }) {
   return (
-    <button type="button" className={styles.card} onClick={onSelect}>
-      <div className={styles.cardIcon}>
-        <Dumbbell size={20} />
+    <div className={styles.cardRow}>
+      <button type="button" className={styles.card} onClick={onSelect}>
+        <div className={styles.cardIcon}>
+          <Dumbbell size={20} />
+        </div>
+        <div className={styles.cardInfo}>
+          <p className={styles.cardName}>{title}</p>
+          <p className={styles.cardMeta}>{meta}</p>
+        </div>
+        <div className={styles.startButton} aria-label={`Ver ${title}`}>
+          <Play size={16} />
+        </div>
+      </button>
+      {onDelete && (
+        <button
+          type="button"
+          className={styles.deleteButton}
+          aria-label={`Eliminar ${title}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            onDelete();
+          }}
+        >
+          <Trash2 size={16} />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function FilterChips({
+  label,
+  options,
+  active,
+  onSelect,
+}: {
+  label: string;
+  options: { value: string | null; label: string }[];
+  active: string | null;
+  onSelect: (value: string | null) => void;
+}) {
+  return (
+    <div className={styles.filterGroup}>
+      <p className={styles.filterLabel}>{label}</p>
+      <div className={styles.filterChips}>
+        {options.map((option) => {
+          const isActive = active === option.value;
+          return (
+            <button
+              key={option.label}
+              type="button"
+              className={`${styles.filterChip} ${isActive ? styles.filterChipActive : ""}`}
+              onClick={() => onSelect(option.value)}
+            >
+              {option.label}
+            </button>
+          );
+        })}
       </div>
-      <div className={styles.cardInfo}>
-        <p className={styles.cardName}>{title}</p>
-        <p className={styles.cardMeta}>{meta}</p>
-      </div>
-      <div className={styles.startButton} aria-label={`Ver ${title}`}>
-        <Play size={16} />
-      </div>
-    </button>
+    </div>
   );
 }
 
@@ -133,10 +203,13 @@ export default function EntrenamientosPage() {
   const searchParams = useSearchParams();
   const { data, isFetching } = useWorkoutRoutines();
   const { data: userData, isFetching: isFetchingUser } = useUserRoutines();
+  const deleteUserRoutine = useDeleteUserRoutine();
   const [selected, setSelected] = useState<SelectedRoutine | null>(null);
   const [activeCategory, setActiveCategory] = useState<UiCategory>(
     parseUiCategory(searchParams.get("category")),
   );
+  const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
 
   const allRoutines = data?.routines ?? [];
   const myRoutines = userData?.routines ?? [];
@@ -146,6 +219,33 @@ export default function EntrenamientosPage() {
     () => allRoutines.filter((routine) => routine.category === meta.workoutCategory),
     [allRoutines, meta.workoutCategory],
   );
+
+  const showGroupChips = activeCategory === "musculacion" || activeCategory === "calistenia";
+
+  const availableLevels = useMemo(() => {
+    const present = new Set(categoryRoutines.map((r) => r.level));
+    return LEVEL_ORDER.filter((level) => present.has(level as WorkoutRoutine["level"]));
+  }, [categoryRoutines]);
+
+  const availableGroups = useMemo(() => {
+    if (!showGroupChips) return [];
+    const present = new Set(categoryRoutines.map((r) => r.dayLabel).filter(Boolean));
+    return (GROUP_ORDER[activeCategory] ?? []).filter((g) => present.has(g));
+  }, [categoryRoutines, showGroupChips, activeCategory]);
+
+  const filteredRoutines = useMemo(() => {
+    return categoryRoutines.filter(
+      (routine) =>
+        (!selectedLevel || routine.level === selectedLevel) &&
+        (!selectedGroup || routine.dayLabel === selectedGroup),
+    );
+  }, [categoryRoutines, selectedLevel, selectedGroup]);
+
+  const selectCategory = (category: UiCategory) => {
+    setActiveCategory(category);
+    setSelectedLevel(null);
+    setSelectedGroup(null);
+  };
 
   const selectPackRoutine = (routine: WorkoutRoutine) => {
     setSelected({
@@ -173,9 +273,88 @@ export default function EntrenamientosPage() {
     });
   };
 
+  const handleDeleteUserRoutine = (routine: UserRoutine) => {
+    const confirmed = window.confirm(`¿Eliminar "${routine.title}"? Esta acción no se puede deshacer.`);
+    if (!confirmed) return;
+    deleteUserRoutine.mutate(routine.id, {
+      onSuccess: () => toast.success("Rutina eliminada"),
+      onError: () => toast.error("No se pudo eliminar la rutina"),
+    });
+  };
+
   const loading =
     (isFetching && allRoutines.length === 0) ||
     (isFetchingUser && myRoutines.length === 0);
+
+  const renderFilters = () => {
+    if (!showGroupChips && availableLevels.length <= 1) return null;
+    return (
+      <div className={styles.filters}>
+        {showGroupChips && availableGroups.length > 1 && (
+          <FilterChips
+            label="Grupo"
+            active={selectedGroup}
+            onSelect={setSelectedGroup}
+            options={[
+              { value: null, label: "Todos" },
+              ...availableGroups.map((g) => ({ value: g, label: g })),
+            ]}
+          />
+        )}
+        {availableLevels.length > 1 && (
+          <FilterChips
+            label="Nivel"
+            active={selectedLevel}
+            onSelect={setSelectedLevel}
+            options={[
+              { value: null, label: "Todos" },
+              ...availableLevels.map((l) => ({ value: l, label: LEVEL_LABEL[l] ?? l })),
+            ]}
+          />
+        )}
+      </div>
+    );
+  };
+
+  const renderRoutineList = (emptyMessage: string) => {
+    if (categoryRoutines.length === 0) {
+      return (
+        <div className={styles.emptyState}>
+          <Sparkles size={22} />
+          <p>{emptyMessage}</p>
+        </div>
+      );
+    }
+    if (filteredRoutines.length === 0) {
+      return (
+        <div className={styles.emptyState}>
+          <Sparkles size={22} />
+          <p>No hay rutinas para esta combinación de filtros.</p>
+        </div>
+      );
+    }
+    return (
+      <div className={styles.list}>
+        {filteredRoutines.map((routine) => (
+          <div key={routine.id} className={styles.routineWrap}>
+            <p className={styles.groupLabel}>
+              {LEVEL_LABEL[routine.level] ?? routine.level} ·{" "}
+              {SPLIT_TYPE_LABEL[routine.splitType] ?? routine.splitType}
+            </p>
+            <RoutineCard
+              title={routine.title}
+              meta={
+                routine.splitType === "sesion"
+                  ? `${routine.exercises.length} bloques`
+                  : `${routine.exercises.length} ejercicios`
+              }
+              onSelect={() => selectPackRoutine(routine)}
+            />
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className={styles.page}>
@@ -209,7 +388,7 @@ export default function EntrenamientosPage() {
               key={category}
               type="button"
               className={`${styles.categoryChip} ${isActive ? styles.categoryChipActive : ""}`}
-              onClick={() => setActiveCategory(category)}
+              onClick={() => selectCategory(category)}
             >
               <Icon size={14} />
               <span>{catMeta.label}</span>
@@ -226,7 +405,7 @@ export default function EntrenamientosPage() {
         <Tabs defaultValue="rutinas" className={styles.tabs} key={activeCategory}>
           <TabsList>
             <TabsTrigger value="rutinas">
-              Por día ({categoryRoutines.length})
+              Rutinas predeterminadas ({categoryRoutines.length})
             </TabsTrigger>
             <TabsTrigger value="mias">
               Mis rutinas ({myRoutines.length})
@@ -234,28 +413,8 @@ export default function EntrenamientosPage() {
           </TabsList>
 
           <TabsContent value="rutinas">
-            {categoryRoutines.length === 0 ? (
-              <div className={styles.emptyState}>
-                <Sparkles size={22} />
-                <p>Todavía no hay sesiones predefinidas para {meta.label}.</p>
-              </div>
-            ) : (
-              <div className={styles.list}>
-                {categoryRoutines.map((routine) => (
-                  <div key={routine.id} className={styles.routineWrap}>
-                    <p className={styles.groupLabel}>
-                      {LEVEL_LABEL[routine.level] ?? routine.level} ·{" "}
-                      {routine.splitType.toUpperCase()}
-                    </p>
-                    <RoutineCard
-                      title={routine.title}
-                      meta={`${routine.exercises.length} ejercicios`}
-                      onSelect={() => selectPackRoutine(routine)}
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
+            {renderFilters()}
+            {renderRoutineList(`Todavía no hay sesiones predefinidas para ${meta.label}.`)}
           </TabsContent>
 
           <TabsContent value="mias">
@@ -277,28 +436,19 @@ export default function EntrenamientosPage() {
                     title={routine.title}
                     meta={`${routine.exercises.length} ejercicios`}
                     onSelect={() => selectUserRoutine(routine)}
+                    onDelete={() => handleDeleteUserRoutine(routine)}
                   />
                 ))}
               </div>
             )}
           </TabsContent>
         </Tabs>
-      ) : categoryRoutines.length === 0 ? (
-        <div className={styles.emptyState}>
-          <Sparkles size={22} />
-          <p>Todavía no hay sesiones para {meta.label}.</p>
-        </div>
       ) : (
-        <div className={styles.list}>
-          {categoryRoutines.map((routine) => (
-            <RoutineCard
-              key={routine.id}
-              title={routine.title}
-              meta={`${routine.exercises.length} bloques`}
-              onSelect={() => selectPackRoutine(routine)}
-            />
-          ))}
-        </div>
+        <>
+          <p className={styles.sectionTitle}>Rutinas predeterminadas</p>
+          {renderFilters()}
+          {renderRoutineList(`Todavía no hay sesiones para ${meta.label}.`)}
+        </>
       )}
 
       {meta.mode === "catalog" && (

@@ -37,7 +37,9 @@
   display: flex;
   gap: var(--spacing-2);
   overflow-x: auto;
-  padding-bottom: var(--spacing-1);
+  padding: 0 var(--spacing-1) var(--spacing-2);
+  margin: 0 calc(var(--spacing-1) * -1);
+  scroll-padding-inline: var(--spacing-1);
   scrollbar-width: none;
 }
 
@@ -126,8 +128,91 @@
   font-size: 0.85rem;
 }
 
+.cardRow {
+  display: flex;
+  align-items: stretch;
+  gap: var(--spacing-2);
+}
+
+.deleteButton {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: border-color var(--animation-duration-fast) ease, color var(--animation-duration-fast) ease, background var(--animation-duration-fast) ease;
+}
+
+.deleteButton:hover {
+  color: #ff5c5c;
+  border-color: color-mix(in srgb, #ff5c5c 40%, var(--border));
+  background: color-mix(in srgb, #ff5c5c 10%, var(--card));
+}
+
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  margin-bottom: var(--spacing-3);
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.filterLabel {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.filterChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+}
+
+.filterChip {
+  flex-shrink: 0;
+  padding: var(--spacing-1) var(--spacing-3);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  color: var(--muted-foreground);
+  font-family: inherit;
+  font-size: 0.76rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color var(--animation-duration-fast) ease, color var(--animation-duration-fast) ease, background var(--animation-duration-fast) ease;
+}
+
+.filterChipActive {
+  background: color-mix(in srgb, var(--primary) 16%, var(--card));
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+
 .card {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: var(--spacing-4);

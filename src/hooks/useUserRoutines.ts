@@ -94,3 +94,20 @@ export const useCreateUserRoutine = () => {
     },
   });
 };
+
+export const useDeleteUserRoutine = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (routineId: string): Promise<void> => {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("user_routines")
+        .delete()
+        .eq("id", routineId);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+    },
+  });
+};
