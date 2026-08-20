@@ -9,5 +9,6 @@
 
 .content {
   flex: 1;
-  padding: var(--spacing-6) var(--spacing-4);
+  padding: var(--spacing-6) var(--spacing-4)
+    calc(5.25rem + env(safe-area-inset-bottom)) var(--spacing-4);
 }

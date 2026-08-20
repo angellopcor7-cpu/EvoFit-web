@@ -45,14 +45,6 @@ const LEVEL_LABEL: Record<string, string> = {
 
 const LEVEL_ORDER = ["principiante", "intermedio", "avanzado", "todos"];
 
-const SPLIT_TYPE_LABEL: Record<string, string> = {
-  fullbody: "Full body",
-  ab: "A/B",
-  abc: "A/B/C",
-  grupo_muscular: "Por grupo muscular",
-  sesion: "Sesión",
-};
-
 // Orden de despliegue de los botones de grupo/bloque para las categorías
 // donde el day_label realmente representa un grupo que se repite entre
 // niveles (musculación y calistenia). El resto de categorías (sesiones
@@ -336,21 +328,16 @@ export default function EntrenamientosPage() {
     return (
       <div className={styles.list}>
         {filteredRoutines.map((routine) => (
-          <div key={routine.id} className={styles.routineWrap}>
-            <p className={styles.groupLabel}>
-              {LEVEL_LABEL[routine.level] ?? routine.level} ·{" "}
-              {SPLIT_TYPE_LABEL[routine.splitType] ?? routine.splitType}
-            </p>
-            <RoutineCard
-              title={routine.title}
-              meta={
-                routine.splitType === "sesion"
-                  ? `${routine.exercises.length} bloques`
-                  : `${routine.exercises.length} ejercicios`
-              }
-              onSelect={() => selectPackRoutine(routine)}
-            />
-          </div>
+          <RoutineCard
+            key={routine.id}
+            title={routine.title}
+            meta={
+              routine.splitType === "sesion"
+                ? `${routine.exercises.length} bloques`
+                : `${routine.exercises.length} ejercicios`
+            }
+            onSelect={() => selectPackRoutine(routine)}
+          />
         ))}
       </div>
     );

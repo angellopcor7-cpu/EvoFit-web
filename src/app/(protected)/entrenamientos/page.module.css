@@ -94,21 +94,6 @@
   gap: var(--spacing-4);
 }
 
-.routineWrap {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1);
-}
-
-.groupLabel {
-  margin: var(--spacing-2) 0 0;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--muted-foreground);
-}
-
 .emptyState {
   display: flex;
   flex-direction: column;
