@@ -1,0 +1,170 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+  max-width: 32rem;
+  margin: 0 auto;
+}
+
+.eyebrow {
+  margin: 0 0 var(--spacing-1);
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.name {
+  margin: 0;
+  font-family: var(--font-family-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.statsCard {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-3);
+  padding: var(--spacing-6);
+  background: var(--card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
+.statIconXp {
+  color: var(--secondary);
+}
+
+.statIconLevel {
+  color: var(--accent);
+}
+
+.statIconStreak {
+  color: var(--primary);
+}
+
+.statValue {
+  font-family: var(--font-family-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.statLabel {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted-foreground);
+}
+
+.ctaCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-4);
+  padding: 1.25rem var(--spacing-6);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--primary) 16%, transparent),
+    color-mix(in srgb, var(--secondary) 10%, transparent)
+  );
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.ctaEyebrow {
+  margin: 0 0 var(--spacing-1);
+  color: var(--muted-foreground);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ctaTitle {
+  margin: 0;
+  font-family: var(--font-family-display);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--foreground);
+}
+
+.ctaButton {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+.note {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.dietCard {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+  padding: var(--spacing-4);
+  background: var(--card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  transition: border-color var(--animation-duration-fast) ease;
+}
+
+.dietCard:hover {
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+}
+
+.dietCardIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--primary);
+}
+
+.dietCardInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.dietCardTitle {
+  margin: 0;
+  font-family: var(--font-family-display);
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--foreground);
+}
+
+.dietCardSubtitle {
+  margin: var(--spacing-1) 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+}
+
+.dietCardArrow {
+  flex-shrink: 0;
+  color: var(--muted-foreground);
+}

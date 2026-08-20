@@ -1,0 +1,66 @@
+.topBar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-4) var(--spacing-4);
+  background: color-mix(in srgb, var(--background) 80%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.logoBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--primary), #ff525a);
+  color: var(--primary-foreground);
+  font-family: var(--font-family-display);
+  font-weight: 700;
+  font-size: 0.7rem;
+}
+
+.wordmark {
+  font-family: var(--font-family-display);
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+}
+
+.brandEvo {
+  color: var(--foreground);
+}
+
+.brandFit {
+  color: var(--primary);
+}
+
+.streakPill {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1) var(--spacing-3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  color: var(--foreground);
+  font-family: var(--font-family-display);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.streakPill svg {
+  color: var(--primary);
+}
