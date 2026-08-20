@@ -112,6 +112,12 @@
   background: linear-gradient(180deg, var(--primary), var(--secondary));
   border-radius: var(--radius-sm);
   transition: height var(--animation-duration-slow) ease;
+  opacity: 0.65;
+}
+
+.barFillToday {
+  opacity: 1;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 60%, transparent);
 }
 
 .barLabel {
@@ -119,11 +125,78 @@
   color: var(--muted-foreground);
 }
 
+.barLabelToday {
+  color: var(--primary);
+  font-weight: 700;
+}
+
 .note {
   margin: 0;
   color: var(--muted-foreground);
   font-size: 0.82rem;
   text-align: center;
+}
+
+.calendarHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.calendarIcon {
+  color: var(--muted-foreground);
+}
+
+.calendarWeekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--spacing-1);
+  margin-top: calc(-1 * var(--spacing-2));
+}
+
+.calendarWeekdays span {
+  text-align: center;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
+}
+
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--spacing-1);
+}
+
+.calendarBlank {
+  aspect-ratio: 1;
+}
+
+.calendarDay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid transparent;
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.calendarDayLight {
+  background: color-mix(in srgb, var(--primary) 28%, var(--surface));
+  color: var(--foreground);
+}
+
+.calendarDayStrong {
+  background: color-mix(in srgb, var(--primary) 60%, var(--surface));
+  color: var(--primary-foreground);
+}
+
+.calendarDayToday {
+  border-color: var(--primary);
 }
 
 .categoryList {

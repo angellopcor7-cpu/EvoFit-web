@@ -284,12 +284,28 @@
 .exerciseRow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--spacing-3);
   padding: var(--spacing-3);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
+}
+
+.exerciseRowIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--primary) 14%, var(--card));
+  color: var(--primary);
+}
+
+.exerciseRowInfo {
+  flex: 1;
+  min-width: 0;
 }
 
 .exerciseName {

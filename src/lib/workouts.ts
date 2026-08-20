@@ -1,3 +1,5 @@
+import type { MuscleGroup } from "@/lib/exercises";
+
 export const WORKOUT_CATEGORIES = [
   "musculacion",
   "calistenia",
@@ -7,6 +9,7 @@ export const WORKOUT_CATEGORIES = [
   "yoga_pilates",
   "boxeo_kickboxing",
   "equipo_especial",
+  "hibrido",
 ] as const;
 
 export type WorkoutCategory = (typeof WORKOUT_CATEGORIES)[number];
@@ -20,12 +23,14 @@ export const WORKOUT_CATEGORY_LABEL: Record<WorkoutCategory, string> = {
   yoga_pilates: "Yoga / Pilates",
   boxeo_kickboxing: "Boxeo / Kickbox",
   equipo_especial: "Equipo especial",
+  hibrido: "Híbridos",
 };
 
 export type WorkoutExercise = {
   id: string;
   orderIndex: number;
   exerciseName: string;
+  muscleGroup: MuscleGroup;
   sets: number;
   repsLabel: string | null;
   durationLabel: string | null;
@@ -56,6 +61,7 @@ export type RoutineRow = {
     id: string;
     order_index: number;
     exercise_name: string;
+    muscle_group: string;
     sets: number;
     reps_label: string | null;
     duration_label: string | null;
@@ -78,6 +84,7 @@ export function mapRoutineRow(row: RoutineRow): WorkoutRoutine {
         id: e.id,
         orderIndex: e.order_index,
         exerciseName: e.exercise_name,
+        muscleGroup: e.muscle_group as MuscleGroup,
         sets: e.sets,
         repsLabel: e.reps_label,
         durationLabel: e.duration_label,

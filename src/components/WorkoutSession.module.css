@@ -1,0 +1,119 @@
+.session {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  align-items: center;
+  text-align: center;
+}
+
+.overallProgress {
+  width: 100%;
+}
+
+.exerciseCount {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.exerciseCard {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-6) var(--spacing-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.exerciseIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--primary) 14%, var(--card));
+  color: var(--primary);
+}
+
+.exerciseName {
+  margin: 0;
+  font-family: var(--font-family-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--foreground);
+}
+
+.setLabel {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.targetLabel {
+  margin: 0;
+  color: var(--primary);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.timerDisplay {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-family: var(--font-family-display);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.phaseNote {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cancelLink {
+  border: none;
+  background: none;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.doneWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-8) var(--spacing-4);
+  text-align: center;
+}
+
+.doneIcon {
+  color: var(--primary);
+}
+
+.doneTitle {
+  margin: 0;
+  font-family: var(--font-family-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--foreground);
+}
+
+.doneSubtitle {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+}

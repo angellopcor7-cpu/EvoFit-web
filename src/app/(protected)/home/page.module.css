@@ -119,30 +119,36 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-4);
-  padding: var(--spacing-4);
-  background: var(--card);
+  padding: 1.1rem var(--spacing-5);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--secondary) 22%, var(--card)),
+    color-mix(in srgb, var(--accent) 16%, var(--card))
+  );
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--border);
+  border: 1px solid color-mix(in srgb, var(--secondary) 35%, var(--border));
   border-radius: var(--radius-lg);
   text-decoration: none;
-  transition: border-color var(--animation-duration-fast) ease;
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--secondary) 18%, transparent);
+  transition: border-color var(--animation-duration-fast) ease, transform var(--animation-duration-fast) ease;
 }
 
 .dietCard:hover {
-  border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+  border-color: color-mix(in srgb, var(--secondary) 55%, var(--border));
+  transform: translateY(-1px);
 }
 
 .dietCardIcon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 3.25rem;
+  height: 3.25rem;
   flex-shrink: 0;
-  border-radius: var(--radius-md);
-  background: var(--surface);
-  color: var(--primary);
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--secondary) 30%, var(--card));
+  color: var(--secondary);
 }
 
 .dietCardInfo {
@@ -150,11 +156,20 @@
   min-width: 0;
 }
 
+.dietCardEyebrow {
+  margin: 0 0 var(--spacing-1);
+  color: var(--secondary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
 .dietCardTitle {
   margin: 0;
   font-family: var(--font-family-display);
-  font-weight: 600;
-  font-size: 0.92rem;
+  font-weight: 700;
+  font-size: 0.98rem;
   color: var(--foreground);
 }
 
@@ -166,5 +181,5 @@
 
 .dietCardArrow {
   flex-shrink: 0;
-  color: var(--muted-foreground);
+  color: var(--secondary);
 }

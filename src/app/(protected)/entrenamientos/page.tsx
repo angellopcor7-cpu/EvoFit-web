@@ -12,6 +12,7 @@ import {
   Wind,
   Swords,
   Layers,
+  Shuffle,
   Plus,
   Play,
   Timer,
@@ -28,11 +29,14 @@ import {
   DialogDescription,
 } from "@/components/ui/Dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
+import { MuscleIcon } from "@/components/MuscleIcon";
+import { WorkoutSession } from "@/components/WorkoutSession";
 import { useWorkoutRoutines } from "@/hooks/useWorkoutRoutines";
 import { useUserRoutines, useDeleteUserRoutine } from "@/hooks/useUserRoutines";
 import { useCompleteWorkout } from "@/hooks/useWorkoutCompletions";
 import type { WorkoutCategory, WorkoutRoutine } from "@/lib/workouts";
 import type { UserRoutine } from "@/lib/userRoutines";
+import type { MuscleGroup } from "@/lib/exercises";
 import styles from "./page.module.css";
 
 const LEVEL_LABEL: Record<string, string> = {
@@ -61,7 +65,8 @@ type UiCategory =
   | "crossfit"
   | "yoga_pilates"
   | "boxeo_kickboxing"
-  | "equipo_especial";
+  | "equipo_especial"
+  | "hibrido";
 
 const UI_CATEGORIES: UiCategory[] = [
   "musculacion",
@@ -72,6 +77,7 @@ const UI_CATEGORIES: UiCategory[] = [
   "yoga_pilates",
   "boxeo_kickboxing",
   "equipo_especial",
+  "hibrido",
 ];
 
 const UI_CATEGORY_META: Record<
@@ -91,6 +97,7 @@ const UI_CATEGORY_META: Record<
   yoga_pilates: { label: "Yoga / Pilates", icon: Wind, mode: "sessions", workoutCategory: "yoga_pilates" },
   boxeo_kickboxing: { label: "Boxeo / Kickbox", icon: Swords, mode: "sessions", workoutCategory: "boxeo_kickboxing" },
   equipo_especial: { label: "Equipo especial", icon: Layers, mode: "sessions", workoutCategory: "equipo_especial" },
+  hibrido: { label: "Híbridos", icon: Shuffle, mode: "sessions", workoutCategory: "hibrido" },
 };
 
 function parseUiCategory(value: string | null): UiCategory {
@@ -103,6 +110,7 @@ function parseUiCategory(value: string | null): UiCategory {
 type DisplayExercise = {
   id: string;
   exerciseName: string;
+  muscleGroup: MuscleGroup;
   sets: number;
   repsLabel: string | null;
   durationLabel: string | null;
@@ -200,6 +208,7 @@ export default function EntrenamientosPage() {
   const deleteUserRoutine = useDeleteUserRoutine();
   const completeWorkout = useCompleteWorkout();
   const [selected, setSelected] = useState<SelectedRoutine | null>(null);
+  const [sessionActive, setSessionActive] = useState(false);
   const [activeCategory, setActiveCategory] = useState<UiCategory>(
     parseUiCategory(searchParams.get("category")),
   );
@@ -263,6 +272,7 @@ export default function EntrenamientosPage() {
       exercises: routine.exercises.map((e) => ({
         id: e.id,
         exerciseName: e.exerciseName,
+        muscleGroup: e.muscleGroup,
         sets: e.sets,
         repsLabel: e.repsLabel,
         durationLabel: e.durationLabel,
@@ -274,7 +284,7 @@ export default function EntrenamientosPage() {
     });
   };
 
-  const handleBeginWorkout = () => {
+  const handleSessionComplete = () => {
     if (!selected) return;
     completeWorkout.mutate(
       {
@@ -291,6 +301,7 @@ export default function EntrenamientosPage() {
               : `¡Entrenamiento registrado! Racha: ${result.currentStreak} ${result.currentStreak === 1 ? "día" : "días"} 🔥`,
           );
           setSelected(null);
+          setSessionActive(false);
         },
         onError: () => toast.error("No se pudo registrar tu entrenamiento"),
       },
@@ -479,10 +490,25 @@ export default function EntrenamientosPage() {
 
       <Dialog
         open={selected !== null}
-        onOpenChange={(open) => !open && setSelected(null)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelected(null);
+            setSessionActive(false);
+          }
+        }}
       >
         <DialogContent className={styles.dialogContent}>
-          {selected && (
+          {selected && sessionActive && (
+            <WorkoutSession
+              routineTitle={selected.title}
+              exercises={selected.exercises}
+              onComplete={handleSessionComplete}
+              onCancel={() => setSessionActive(false)}
+              isSaving={completeWorkout.isPending}
+              saveError={completeWorkout.isError}
+            />
+          )}
+          {selected && !sessionActive && (
             <>
               <DialogHeader>
                 <DialogTitle>{selected.title}</DialogTitle>
@@ -491,9 +517,14 @@ export default function EntrenamientosPage() {
               <div className={styles.exerciseList}>
                 {selected.exercises.map((exercise) => (
                   <div key={exercise.id} className={styles.exerciseRow}>
-                    <p className={styles.exerciseName}>
-                      {exercise.exerciseName}
-                    </p>
+                    <div className={styles.exerciseRowIcon}>
+                      <MuscleIcon group={exercise.muscleGroup} size={22} />
+                    </div>
+                    <div className={styles.exerciseRowInfo}>
+                      <p className={styles.exerciseName}>
+                        {exercise.exerciseName}
+                      </p>
+                    </div>
                     <div className={styles.exerciseMeta}>
                       <span>
                         {exercise.repsLabel
@@ -509,15 +540,10 @@ export default function EntrenamientosPage() {
               </div>
               <Button
                 type="button"
-                onClick={handleBeginWorkout}
-                disabled={completeWorkout.isPending}
+                onClick={() => setSessionActive(true)}
                 className={styles.beginButton}
               >
-                {completeWorkout.isPending ? (
-                  <Spinner size="sm" />
-                ) : (
-                  "Empezar entrenamiento"
-                )}
+                Empezar entrenamiento
               </Button>
             </>
           )}

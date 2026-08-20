@@ -81,9 +81,10 @@ export default function HomePage() {
 
       <Link href="/dieta" className={styles.dietCard}>
         <div className={styles.dietCardIcon}>
-          {dietPlan ? <RefreshCw size={20} /> : <Utensils size={20} />}
+          {dietPlan ? <RefreshCw size={22} /> : <Utensils size={22} />}
         </div>
         <div className={styles.dietCardInfo}>
+          <p className={styles.dietCardEyebrow}>Nutrición</p>
           {dietPlan ? (
             <>
               <p className={styles.dietCardTitle}>

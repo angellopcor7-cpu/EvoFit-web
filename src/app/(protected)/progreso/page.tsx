@@ -1,6 +1,6 @@
 "use client";
 
-import { Flame, Dumbbell, TrendingUp } from "lucide-react";
+import { Flame, Dumbbell, TrendingUp, CalendarDays } from "lucide-react";
 import { useAuthSession } from "@/hooks/useProfile";
 import { useWorkoutStats } from "@/hooks/useWorkoutCompletions";
 import { Progress } from "@/components/ui/Progress";
@@ -21,6 +21,21 @@ function relativeDate(iso: string): string {
   return date.toLocaleDateString("es-MX", { day: "numeric", month: "short" });
 }
 
+// Lunes=0 ... Domingo=6, para alinear el primer día del mes en la cuadrícula.
+function mondayFirstWeekday(dateStr: string): number {
+  const day = new Date(`${dateStr}T00:00:00`).getDay();
+  return (day + 6) % 7;
+}
+
+// Intensidad de la celda del calendario según cuántos entrenos tuvo ese día
+// (un solo hue, más oscuro = más entrenos) — nunca color como único indicador,
+// ya que el número de entrenos también se muestra en el título del día.
+function calendarCellIntensity(count: number): string {
+  if (count <= 0) return "";
+  if (count === 1) return styles.calendarDayLight ?? "";
+  return styles.calendarDayStrong ?? "";
+}
+
 export default function ProgresoPage() {
   const { data } = useAuthSession();
   const profile = data?.profile;
@@ -32,6 +47,9 @@ export default function ProgresoPage() {
   const maxCategoryCount = Math.max(1, ...categoryBreakdown.map((c) => c.count));
   const recent = stats?.recent ?? [];
   const hasActivity = (stats?.totalCount ?? 0) > 0;
+
+  const calendarDays = stats?.calendarDays ?? [];
+  const leadingBlanks = calendarDays.length > 0 ? mondayFirstWeekday(calendarDays[0].date) : 0;
 
   return (
     <div className={styles.page}>
@@ -60,19 +78,52 @@ export default function ProgresoPage() {
       </div>
 
       <div className={styles.chartCard}>
-        <p className={styles.chartTitle}>Actividad de la semana</p>
+        <p className={styles.chartTitle}>Semana (lunes a domingo)</p>
         <div className={styles.bars}>
           {last7Days.map((entry) => (
             <div key={entry.date} className={styles.barColumn}>
               <div className={styles.barTrack}>
                 <div
-                  className={styles.barFill}
+                  className={`${styles.barFill} ${entry.isToday ? styles.barFillToday : ""}`}
                   style={{
                     height: `${entry.count === 0 ? 0 : Math.max(10, (entry.count / maxDayCount) * 100)}%`,
                   }}
+                  title={`${entry.count} entreno${entry.count === 1 ? "" : "s"}`}
                 />
               </div>
-              <span className={styles.barLabel}>{entry.label}</span>
+              <span className={`${styles.barLabel} ${entry.isToday ? styles.barLabelToday : ""}`}>
+                {entry.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className={styles.chartCard}>
+        <div className={styles.calendarHeader}>
+          <CalendarDays size={16} className={styles.calendarIcon} />
+          <p className={styles.chartTitle}>
+            {stats?.calendarMonthLabel
+              ? stats.calendarMonthLabel.charAt(0).toUpperCase() + stats.calendarMonthLabel.slice(1)
+              : "Calendario"}
+          </p>
+        </div>
+        <div className={styles.calendarWeekdays}>
+          {["L", "M", "M", "J", "V", "S", "D"].map((label, index) => (
+            <span key={`${label}-${index}`}>{label}</span>
+          ))}
+        </div>
+        <div className={styles.calendarGrid}>
+          {Array.from({ length: leadingBlanks }).map((_, index) => (
+            <div key={`blank-${index}`} className={styles.calendarBlank} />
+          ))}
+          {calendarDays.map((day) => (
+            <div
+              key={day.date}
+              className={`${styles.calendarDay} ${calendarCellIntensity(day.count)} ${day.isToday ? styles.calendarDayToday : ""}`}
+              title={`${day.count} entreno${day.count === 1 ? "" : "s"}`}
+            >
+              {day.dayOfMonth}
             </div>
           ))}
         </div>
