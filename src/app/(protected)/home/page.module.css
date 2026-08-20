@@ -42,16 +42,16 @@
   gap: var(--spacing-1);
 }
 
-.statIconXp {
+.statIconStreak {
+  color: var(--primary);
+}
+
+.statIconBest {
   color: var(--secondary);
 }
 
-.statIconLevel {
+.statIconWorkouts {
   color: var(--accent);
-}
-
-.statIconStreak {
-  color: var(--primary);
 }
 
 .statValue {

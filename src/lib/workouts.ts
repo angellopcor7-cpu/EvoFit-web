@@ -11,6 +11,17 @@ export const WORKOUT_CATEGORIES = [
 
 export type WorkoutCategory = (typeof WORKOUT_CATEGORIES)[number];
 
+export const WORKOUT_CATEGORY_LABEL: Record<WorkoutCategory, string> = {
+  musculacion: "Musculación",
+  calistenia: "Calistenia",
+  cardio_hiit: "Cardio",
+  zumba: "Zumba",
+  crossfit: "CrossFit",
+  yoga_pilates: "Yoga / Pilates",
+  boxeo_kickboxing: "Boxeo / Kickbox",
+  equipo_especial: "Equipo especial",
+};
+
 export type WorkoutExercise = {
   id: string;
   orderIndex: number;

@@ -7,8 +7,6 @@ export type Profile = {
   id: string;
   displayName: string;
   avatarUrl: string | null;
-  xp: number;
-  level: number;
   currentStreak: number;
   longestStreak: number;
   lastActiveDate: string | null;
@@ -20,8 +18,6 @@ type ProfileRow = {
   id: string;
   display_name: string;
   avatar_url: string | null;
-  xp: number;
-  level: number;
   current_streak: number;
   longest_streak: number;
   last_active_date: string | null;
@@ -34,8 +30,6 @@ function mapProfile(row: ProfileRow): Profile {
     id: row.id,
     displayName: row.display_name,
     avatarUrl: row.avatar_url,
-    xp: row.xp,
-    level: row.level,
     currentStreak: row.current_streak,
     longestStreak: row.longest_streak,
     lastActiveDate: row.last_active_date,

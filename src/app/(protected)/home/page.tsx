@@ -1,18 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { Flame, Trophy, Zap, ArrowRight, Utensils, RefreshCw } from "lucide-react";
+import { Flame, TrendingUp, Dumbbell, ArrowRight, Utensils, RefreshCw, Check } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useAuthSession } from "@/hooks/useProfile";
 import { useDietPlan } from "@/hooks/useDietPlan";
+import { useWorkoutStats } from "@/hooks/useWorkoutCompletions";
 import { DIET_GOAL_LABEL } from "@/lib/diet";
 import styles from "./page.module.css";
+
+function todayStr(): string {
+  return new Date().toISOString().slice(0, 10);
+}
 
 export default function HomePage() {
   const { data } = useAuthSession();
   const profile = data?.profile;
   const { data: dietData } = useDietPlan();
   const dietPlan = dietData?.plan ?? null;
+  const { data: stats } = useWorkoutStats();
+
+  const trainedToday = profile?.lastActiveDate === todayStr();
 
   return (
     <div className={styles.page}>
@@ -23,21 +31,23 @@ export default function HomePage() {
 
       <div className={styles.statsCard}>
         <div className={styles.stat}>
-          <Zap size={18} className={styles.statIconXp} />
-          <span className={styles.statValue}>{profile?.xp ?? 0}</span>
-          <span className={styles.statLabel}>XP</span>
-        </div>
-        <div className={styles.stat}>
-          <Trophy size={18} className={styles.statIconLevel} />
-          <span className={styles.statValue}>{profile?.level ?? 1}</span>
-          <span className={styles.statLabel}>Nivel</span>
-        </div>
-        <div className={styles.stat}>
           <Flame size={18} className={styles.statIconStreak} />
           <span className={styles.statValue}>
             {profile?.currentStreak ?? 0}
           </span>
           <span className={styles.statLabel}>Racha</span>
+        </div>
+        <div className={styles.stat}>
+          <TrendingUp size={18} className={styles.statIconBest} />
+          <span className={styles.statValue}>
+            {profile?.longestStreak ?? 0}
+          </span>
+          <span className={styles.statLabel}>Mejor racha</span>
+        </div>
+        <div className={styles.stat}>
+          <Dumbbell size={18} className={styles.statIconWorkouts} />
+          <span className={styles.statValue}>{stats?.totalCount ?? 0}</span>
+          <span className={styles.statLabel}>Entrenos</span>
         </div>
       </div>
 
@@ -45,18 +55,28 @@ export default function HomePage() {
         <div>
           <p className={styles.ctaEyebrow}>Hoy</p>
           <p className={styles.ctaTitle}>
-            Aún no tienes un entrenamiento registrado
+            {trainedToday
+              ? "¡Ya entrenaste hoy! Sigue así"
+              : "Aún no tienes un entrenamiento registrado"}
           </p>
         </div>
-        <Button asChild className={styles.ctaButton}>
-          <Link href="/entrenamientos">
-            Empezar <ArrowRight size={16} />
-          </Link>
-        </Button>
+        {trainedToday ? (
+          <Button asChild variant="outline" className={styles.ctaButton}>
+            <Link href="/progreso">
+              <Check size={16} /> Progreso
+            </Link>
+          </Button>
+        ) : (
+          <Button asChild className={styles.ctaButton}>
+            <Link href="/entrenamientos">
+              Empezar <ArrowRight size={16} />
+            </Link>
+          </Button>
+        )}
       </div>
 
       <p className={styles.note}>
-        Cada entrenamiento que completes suma XP y mantiene tu racha viva.
+        Cada entrenamiento que completes mantiene tu racha viva.
       </p>
 
       <Link href="/dieta" className={styles.dietCard}>

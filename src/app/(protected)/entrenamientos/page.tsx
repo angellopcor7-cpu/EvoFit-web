@@ -30,11 +30,10 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
 import { useWorkoutRoutines } from "@/hooks/useWorkoutRoutines";
 import { useUserRoutines, useDeleteUserRoutine } from "@/hooks/useUserRoutines";
+import { useCompleteWorkout } from "@/hooks/useWorkoutCompletions";
 import type { WorkoutCategory, WorkoutRoutine } from "@/lib/workouts";
 import type { UserRoutine } from "@/lib/userRoutines";
 import styles from "./page.module.css";
-
-const comingSoon = () => toast.info("Muy pronto vas a poder registrar tu entrenamiento.");
 
 const LEVEL_LABEL: Record<string, string> = {
   principiante: "Principiante",
@@ -114,6 +113,9 @@ type SelectedRoutine = {
   title: string;
   subtitle: string;
   exercises: DisplayExercise[];
+  category: WorkoutCategory;
+  workoutRoutineId: string | null;
+  userRoutineId: string | null;
 };
 
 function RoutineCard({
@@ -196,6 +198,7 @@ export default function EntrenamientosPage() {
   const { data, isFetching } = useWorkoutRoutines();
   const { data: userData, isFetching: isFetchingUser } = useUserRoutines();
   const deleteUserRoutine = useDeleteUserRoutine();
+  const completeWorkout = useCompleteWorkout();
   const [selected, setSelected] = useState<SelectedRoutine | null>(null);
   const [activeCategory, setActiveCategory] = useState<UiCategory>(
     parseUiCategory(searchParams.get("category")),
@@ -247,6 +250,9 @@ export default function EntrenamientosPage() {
           ? `${routine.exercises.length} bloques · ${UI_CATEGORY_META[activeCategory].label}`
           : `${routine.exercises.length} ejercicios · Nivel ${LEVEL_LABEL[routine.level] ?? routine.level}`,
       exercises: routine.exercises,
+      category: meta.workoutCategory,
+      workoutRoutineId: routine.id,
+      userRoutineId: null,
     });
   };
 
@@ -262,7 +268,33 @@ export default function EntrenamientosPage() {
         durationLabel: e.durationLabel,
         restLabel: e.restLabel,
       })),
+      category: meta.workoutCategory,
+      workoutRoutineId: null,
+      userRoutineId: routine.id,
     });
+  };
+
+  const handleBeginWorkout = () => {
+    if (!selected) return;
+    completeWorkout.mutate(
+      {
+        category: selected.category,
+        routineTitle: selected.title,
+        workoutRoutineId: selected.workoutRoutineId,
+        userRoutineId: selected.userRoutineId,
+      },
+      {
+        onSuccess: (result) => {
+          toast.success(
+            result.alreadyLoggedToday
+              ? "¡Entrenamiento registrado! Ya tenías uno hoy, tu racha sigue igual."
+              : `¡Entrenamiento registrado! Racha: ${result.currentStreak} ${result.currentStreak === 1 ? "día" : "días"} 🔥`,
+          );
+          setSelected(null);
+        },
+        onError: () => toast.error("No se pudo registrar tu entrenamiento"),
+      },
+    );
   };
 
   const handleDeleteUserRoutine = (routine: UserRoutine) => {
@@ -477,10 +509,15 @@ export default function EntrenamientosPage() {
               </div>
               <Button
                 type="button"
-                onClick={comingSoon}
+                onClick={handleBeginWorkout}
+                disabled={completeWorkout.isPending}
                 className={styles.beginButton}
               >
-                Empezar entrenamiento
+                {completeWorkout.isPending ? (
+                  <Spinner size="sm" />
+                ) : (
+                  "Empezar entrenamiento"
+                )}
               </Button>
             </>
           )}
