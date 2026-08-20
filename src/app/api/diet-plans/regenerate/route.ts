@@ -46,6 +46,7 @@ export async function POST(request: Request) {
       .from("diet_meal_options")
       .select("*")
       .eq("diet_style", existing.dietStyle)
+      .eq("budget", existing.budget)
       .order("meal_slot", { ascending: true })
       .order("order_index", { ascending: true });
     if (optionsError) throw new Error(optionsError.message);

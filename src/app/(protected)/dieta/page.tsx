@@ -20,11 +20,14 @@ import {
   DIET_GOAL_LABEL,
   DIET_STYLES,
   DIET_STYLE_LABEL,
+  DIET_BUDGETS,
+  DIET_BUDGET_LABEL,
   DIET_MEAL_SLOT_LABEL,
   DIET_PROTEIN_TYPES,
   DIET_PROTEIN_TYPE_LABEL,
   type DietGoal,
   type DietStyle,
+  type DietBudget,
   type DietProteinType,
 } from "@/lib/diet";
 import {
@@ -46,6 +49,7 @@ export default function DietaPage() {
   const [step, setStep] = useState<Step | null>(null);
   const [goal, setGoal] = useState<DietGoal | null>(null);
   const [dietStyle, setDietStyle] = useState<DietStyle | null>(null);
+  const [budget, setBudget] = useState<DietBudget | null>(null);
   const [sex, setSex] = useState<Sex>("masculino");
   const [age, setAge] = useState("28");
   const [heightCm, setHeightCm] = useState("170");
@@ -76,11 +80,15 @@ export default function DietaPage() {
       toast.error("Elige un estilo de alimentación");
       return;
     }
+    if (!budget) {
+      toast.error("Elige tu presupuesto");
+      return;
+    }
     setStep("datos");
   };
 
   const handleCreatePlan = () => {
-    if (!goal || !dietStyle) {
+    if (!goal || !dietStyle || !budget) {
       setStep("meta");
       return;
     }
@@ -96,6 +104,7 @@ export default function DietaPage() {
       {
         goal,
         dietStyle,
+        budget,
         sex,
         age: ageNum,
         heightCm: heightNum,
@@ -185,6 +194,20 @@ export default function DietaPage() {
                 onClick={() => setDietStyle(s)}
               >
                 {DIET_STYLE_LABEL[s]}
+              </button>
+            ))}
+          </div>
+
+          <p className={styles.hint}>¿Cuál es tu presupuesto?</p>
+          <div className={styles.chipGrid}>
+            {DIET_BUDGETS.map((b) => (
+              <button
+                key={b}
+                type="button"
+                className={`${styles.chip} ${budget === b ? styles.chipActive : ""}`}
+                onClick={() => setBudget(b)}
+              >
+                {DIET_BUDGET_LABEL[b]}
               </button>
             ))}
           </div>
@@ -295,7 +318,8 @@ export default function DietaPage() {
         <div className={styles.stepContent}>
           <div className={styles.summaryCard}>
             <p className={styles.summaryEyebrow}>
-              {DIET_GOAL_LABEL[plan.goal]} · {DIET_STYLE_LABEL[plan.dietStyle]}
+              {DIET_GOAL_LABEL[plan.goal]} · {DIET_STYLE_LABEL[plan.dietStyle]} ·{" "}
+              {DIET_BUDGET_LABEL[plan.budget]}
             </p>
             <p className={styles.summaryKcal}>{plan.targetKcal} kcal/día</p>
             <div className={styles.macrosRow}>
@@ -373,6 +397,7 @@ export default function DietaPage() {
             onClick={() => {
               setGoal(plan.goal);
               setDietStyle(plan.dietStyle);
+              setBudget(plan.budget);
               setStep("meta");
             }}
           >

@@ -40,6 +40,16 @@ export const DIET_STYLE_LABEL: Record<DietStyle, string> = {
   mediterranea: "Mediterránea",
 };
 
+export const DIET_BUDGETS = ["economico", "moderado", "premium"] as const;
+
+export type DietBudget = (typeof DIET_BUDGETS)[number];
+
+export const DIET_BUDGET_LABEL: Record<DietBudget, string> = {
+  economico: "Económico",
+  moderado: "Moderado",
+  premium: "Premium",
+};
+
 export const DIET_MEAL_SLOTS = ["desayuno", "comida", "cena", "snack"] as const;
 
 export type DietMealSlot = (typeof DIET_MEAL_SLOTS)[number];
@@ -76,6 +86,7 @@ export type DietMealOption = {
   dietStyle: DietStyle;
   mealSlot: DietMealSlot;
   proteinType: DietProteinType;
+  budget: DietBudget;
   name: string;
   description: string;
   kcal: number;
@@ -90,6 +101,7 @@ export type DietMealOptionRow = {
   diet_style: string;
   meal_slot: string;
   protein_type: string;
+  budget: string;
   name: string;
   description: string;
   kcal: number;
@@ -105,6 +117,7 @@ export function mapMealOptionRow(row: DietMealOptionRow): DietMealOption {
     dietStyle: row.diet_style as DietStyle,
     mealSlot: row.meal_slot as DietMealSlot,
     proteinType: row.protein_type as DietProteinType,
+    budget: row.budget as DietBudget,
     name: row.name,
     description: row.description,
     kcal: row.kcal,
@@ -131,6 +144,7 @@ export type DietPlan = {
   id: string;
   goal: DietGoal;
   dietStyle: DietStyle;
+  budget: DietBudget;
   targetKcal: number;
   targetProteinG: number;
   targetCarbsG: number;
@@ -145,6 +159,7 @@ export type DietPlanRow = {
   id: string;
   goal: string;
   diet_style: string;
+  budget: string;
   target_kcal: number;
   target_protein_g: number;
   target_carbs_g: number;
@@ -170,6 +185,7 @@ export function mapDietPlanRow(row: DietPlanRow): DietPlan {
     id: row.id,
     goal: row.goal as DietGoal,
     dietStyle: row.diet_style as DietStyle,
+    budget: row.budget as DietBudget,
     targetKcal: row.target_kcal,
     targetProteinG: row.target_protein_g,
     targetCarbsG: row.target_carbs_g,

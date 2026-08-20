@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   DIET_GOALS,
   DIET_STYLES,
+  DIET_BUDGETS,
   DIET_PROTEIN_TYPES,
   DIET_MEAL_SLOTS,
   type DietMealOptionRow,
@@ -15,6 +16,7 @@ import { ACTIVITY_LEVELS, SEX_OPTIONS, calculateDietTargets } from "@/lib/dietCa
 const schema = z.object({
   goal: z.enum(DIET_GOALS),
   dietStyle: z.enum(DIET_STYLES),
+  budget: z.enum(DIET_BUDGETS),
   sex: z.enum(SEX_OPTIONS),
   age: z.number().int().min(14).max(90),
   heightCm: z.number().min(120).max(230),
@@ -43,6 +45,7 @@ export async function POST(request: Request) {
       .from("diet_meal_options")
       .select("*")
       .eq("diet_style", input.dietStyle)
+      .eq("budget", input.budget)
       .order("meal_slot", { ascending: true })
       .order("order_index", { ascending: true });
     if (optionsError) throw new Error(optionsError.message);
@@ -61,6 +64,7 @@ export async function POST(request: Request) {
         user_id: user.id,
         goal: input.goal,
         diet_style: input.dietStyle,
+        budget: input.budget,
         target_kcal: targets.targetKcal,
         target_protein_g: targets.targetProteinG,
         target_carbs_g: targets.targetCarbsG,
@@ -98,6 +102,7 @@ export async function POST(request: Request) {
         id: planRow.id,
         goal: planRow.goal,
         dietStyle: planRow.diet_style,
+        budget: planRow.budget,
         targetKcal: planRow.target_kcal,
         targetProteinG: planRow.target_protein_g,
         targetCarbsG: planRow.target_carbs_g,

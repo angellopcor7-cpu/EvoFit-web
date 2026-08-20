@@ -7,6 +7,7 @@ import {
   type DietPlanRow,
   type DietGoal,
   type DietStyle,
+  type DietBudget,
   type DietProteinType,
   mapDietPlanRow,
 } from "@/lib/diet";
@@ -41,6 +42,7 @@ export const useDietPlan = () => {
 export type CreateDietPlanInput = {
   goal: DietGoal;
   dietStyle: DietStyle;
+  budget: DietBudget;
   sex: Sex;
   age: number;
   heightCm: number;
