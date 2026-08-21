@@ -1,17 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { Flame } from "lucide-react";
+import { Flame, Dumbbell, TrendingUp } from "lucide-react";
 import { Button } from "./ui/Button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "./ui/Dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "./ui/Dialog";
 import { useAuthSession, useMarkWelcomeSeen } from "@/hooks/useProfile";
 import styles from "./WelcomeDialog.module.css";
+
+const HIGHLIGHTS = [
+  {
+    icon: Dumbbell,
+    title: "EvoFit es tu herramienta",
+    text: "Te organiza los entrenos, la dieta y el progreso.",
+  },
+  {
+    icon: Flame,
+    title: "Tú pones el esfuerzo",
+    text: "Ninguna app entrena por ti — cada repetición es tuya.",
+  },
+  {
+    icon: TrendingUp,
+    title: "No es imposible",
+    text: "Un día a la vez. Así se construyen las rachas.",
+  },
+];
 
 // Se muestra una sola vez, la primera vez que el usuario entra a la app
 // (profiles.has_seen_welcome pasa a true apenas se cierra). El mensaje deja
@@ -36,27 +48,39 @@ export const WelcomeDialog = () => {
   return (
     <Dialog open={open} onOpenChange={(next) => !next && handleClose()}>
       <DialogContent className={styles.content}>
-        <DialogHeader>
-          <div className={styles.icon}>
-            <Flame size={22} />
+        <div className={styles.hero}>
+          <div className={styles.heroGlowRed} aria-hidden="true" />
+          <div className={styles.heroGlowViolet} aria-hidden="true" />
+          <div className={styles.iconBadge}>
+            <Flame size={26} />
           </div>
+          <p className={styles.eyebrow}>Antes de empezar</p>
           <DialogTitle className={styles.title}>
-            {firstName ? `Antes de empezar, ${firstName}` : "Antes de empezar"}
+            {firstName ? `${firstName}, esto depende de ti` : "Esto depende de ti"}
           </DialogTitle>
-          <DialogDescription className={styles.description}>
-            EvoFit es solo una herramienta — te va a ayudar a organizar tus
-            entrenamientos, tu dieta y tu progreso. Pero quien realmente va a
-            mejorar su físico eres tú{firstName ? `, ${firstName}` : ""}. Cada
-            entrenamiento, cada comida y cada día de constancia dependen de
-            ti, no de la app.
-            <br />
-            <br />
-            No va a ser fácil, pero tampoco es imposible. Un día a la vez.
+        </div>
+
+        <div className={styles.body}>
+          <DialogDescription className={styles.srOnly}>
+            EvoFit es una herramienta de apoyo. Quien mejora su físico eres tú.
           </DialogDescription>
-        </DialogHeader>
-        <Button type="button" className={styles.startButton} onClick={handleClose}>
-          Vamos a entrenar
-        </Button>
+
+          {HIGHLIGHTS.map((item) => (
+            <div key={item.title} className={styles.highlightRow}>
+              <div className={styles.highlightIcon}>
+                <item.icon size={18} />
+              </div>
+              <div>
+                <p className={styles.highlightTitle}>{item.title}</p>
+                <p className={styles.highlightText}>{item.text}</p>
+              </div>
+            </div>
+          ))}
+
+          <Button type="button" className={styles.startButton} onClick={handleClose}>
+            Vamos a entrenar
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
