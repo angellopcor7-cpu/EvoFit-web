@@ -6,18 +6,24 @@ import {
 import type { MuscleGroup } from "@/lib/exercises";
 import type { WorkoutCategory } from "@/lib/workouts";
 
-// Mono simple (cabeza + torso + un brazo + una pierna, vista de lado) que se
-// dibuja en dos posiciones — inicio y final del movimiento — para mostrar
-// "cómo se hace" el ejercicio sin necesitar fotos reales. Ver
-// src/lib/exercisePatterns.ts para el porqué de este enfoque.
+// Figura con cuerpo (cabeza + torso ancho + brazo + pierna con grosor de
+// "cápsula", vista de lado) que se dibuja en dos posiciones — inicio y
+// final del movimiento — para mostrar "cómo se hace" el ejercicio sin
+// necesitar fotos reales. Ver src/lib/exercisePatterns.ts para el porqué
+// de este enfoque.
 
 const TORSO_LEN = 16;
-const HEAD_R = 5;
-const HEAD_GAP = 2;
+const HEAD_R = 6.5;
+const HEAD_GAP = 1.5;
 const UPPER_ARM = 9;
 const FOREARM = 9;
 const THIGH = 12;
 const SHIN = 12;
+
+const TORSO_WIDTH = 10.5;
+const LIMB_WIDTH = 6.5;
+const HAND_R = 3.4;
+const FOOT_R = 3.6;
 
 function dirUp(deg: number): [number, number] {
   const r = (deg * Math.PI) / 180;
@@ -45,28 +51,36 @@ function computeFigure(figurePose: FigurePose) {
 function Figure({
   figurePose,
   color,
+  limbColor,
   offsetX,
 }: {
   figurePose: FigurePose;
   color: string;
+  limbColor: string;
   offsetX: number;
 }) {
   const f = computeFigure(figurePose);
   const pts = (a: [number, number], b: [number, number], c?: [number, number]) =>
     c ? `${a[0]},${a[1]} ${b[0]},${b[1]} ${c[0]},${c[1]}` : `${a[0]},${a[1]} ${b[0]},${b[1]}`;
   return (
-    <g transform={`translate(${offsetX}, 0)`} stroke={color} strokeWidth={2.4} fill="none" strokeLinecap="round" strokeLinejoin="round">
+    <g transform={`translate(${offsetX}, 0)`} fill="none" strokeLinecap="round" strokeLinejoin="round">
+      {/* pierna y brazo (más delgados, "detrás" del torso) */}
+      <polyline points={pts(f.hip, f.knee, f.foot)} stroke={limbColor} strokeWidth={LIMB_WIDTH} />
+      <polyline points={pts(f.shoulder, f.elbow, f.hand)} stroke={limbColor} strokeWidth={LIMB_WIDTH} />
+      {/* mano y pie: bultos redondeados al final de cada extremidad */}
+      <circle cx={f.hand[0]} cy={f.hand[1]} r={HAND_R} fill={limbColor} stroke="none" />
+      <circle cx={f.foot[0]} cy={f.foot[1]} r={FOOT_R} fill={limbColor} stroke="none" />
+      {/* torso: cápsula ancha */}
+      <polyline points={pts(f.shoulder, f.hip)} stroke={color} strokeWidth={TORSO_WIDTH} />
+      {/* cabeza */}
       <circle cx={f.head[0]} cy={f.head[1]} r={HEAD_R} fill={color} stroke="none" />
-      <polyline points={pts(f.shoulder, f.hip)} />
-      <polyline points={pts(f.shoulder, f.elbow, f.hand)} />
-      <polyline points={pts(f.hip, f.knee, f.foot)} />
     </g>
   );
 }
 
 const FIGURE_WIDTH = 60;
-const FIGURE_HEIGHT = 64;
-const GAP = 14;
+const FIGURE_HEIGHT = 68;
+const GAP = 16;
 const VIEW_WIDTH = FIGURE_WIDTH * 2 + GAP;
 
 export function ExercisePoseIcon({
@@ -101,12 +115,22 @@ export function ExercisePoseIcon({
       role="img"
       aria-label={`Movimiento de ${exerciseName}: inicio y final`}
     >
-      <Figure figurePose={start} color="var(--muted-foreground)" offsetX={0} />
+      <Figure
+        figurePose={start}
+        color="var(--muted-foreground)"
+        limbColor="color-mix(in srgb, var(--muted-foreground) 78%, transparent)"
+        offsetX={0}
+      />
       <g stroke="var(--muted-foreground)" strokeWidth={1.4} opacity={0.55}>
         <line x1={arrowX1} y1={arrowY} x2={arrowX2 - 3} y2={arrowY} strokeDasharray="2 2" />
         <polygon points={`${arrowX2 - 4},${arrowY - 3} ${arrowX2},${arrowY} ${arrowX2 - 4},${arrowY + 3}`} fill="var(--muted-foreground)" stroke="none" />
       </g>
-      <Figure figurePose={end} color="var(--primary)" offsetX={FIGURE_WIDTH + GAP} />
+      <Figure
+        figurePose={end}
+        color="var(--primary)"
+        limbColor="color-mix(in srgb, var(--primary) 78%, transparent)"
+        offsetX={FIGURE_WIDTH + GAP}
+      />
     </svg>
   );
 }

@@ -68,8 +68,8 @@ export type PatternPoses = { start: FigurePose; end: FigurePose };
 const DEFAULT_POSE: FigurePose = {
   hip: [30, 36],
   torsoAngle: 0,
-  armAngle: 12,
-  forearmAngle: 15,
+  armAngle: 24,
+  forearmAngle: 28,
   legAngle: 0,
   shinAngle: 6,
 };
@@ -108,8 +108,8 @@ export const PATTERN_POSES: Record<ExercisePattern, PatternPoses> = {
     end: pose({ hip: [30, 44], legAngle: 5, shinAngle: 10, armAngle: 160, forearmAngle: 60 }),
   },
   curl_biceps: {
-    start: pose({ armAngle: 15, forearmAngle: 15 }),
-    end: pose({ armAngle: 15, forearmAngle: 175 }),
+    start: pose({ armAngle: 24, forearmAngle: 24 }),
+    end: pose({ armAngle: 24, forearmAngle: 178 }),
   },
   extension_triceps: {
     start: pose({ armAngle: 175, forearmAngle: 80 }),
@@ -124,16 +124,16 @@ export const PATTERN_POSES: Record<ExercisePattern, PatternPoses> = {
     end: pose({ hip: [40, 40], torsoAngle: -90, legAngle: 85, shinAngle: 85, armAngle: 5, forearmAngle: 5 }),
   },
   elevacion_lateral: {
-    start: pose({ armAngle: 12, forearmAngle: 15 }),
+    start: pose({ armAngle: 24, forearmAngle: 28 }),
     end: pose({ armAngle: 90, forearmAngle: 92 }),
   },
   elevacion_frontal: {
-    start: pose({ armAngle: 12, forearmAngle: 15 }),
+    start: pose({ armAngle: 24, forearmAngle: 28 }),
     end: pose({ armAngle: 88, forearmAngle: 90 }),
   },
   encogimiento: {
-    start: pose({ hip: [30, 36], armAngle: 15, forearmAngle: 15 }),
-    end: pose({ hip: [30, 34], armAngle: 15, forearmAngle: 15 }),
+    start: pose({ hip: [30, 36], armAngle: 24, forearmAngle: 26 }),
+    end: pose({ hip: [30, 34], armAngle: 24, forearmAngle: 26 }),
   },
   sentadilla: {
     start: pose({ torsoAngle: 5, armAngle: 80, forearmAngle: 85 }),
@@ -145,7 +145,7 @@ export const PATTERN_POSES: Record<ExercisePattern, PatternPoses> = {
   },
   peso_muerto: {
     start: pose({ torsoAngle: 80, armAngle: 80, forearmAngle: 80 }),
-    end: pose({ hip: [30, 34], torsoAngle: 0, armAngle: 10, forearmAngle: 12 }),
+    end: pose({ hip: [30, 34], torsoAngle: 0, armAngle: 24, forearmAngle: 26 }),
   },
   prensa_pierna: {
     start: pose({ hip: [26, 40], torsoAngle: -70, legAngle: 70, shinAngle: -100 }),
