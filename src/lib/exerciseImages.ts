@@ -22,6 +22,14 @@ export const EXERCISE_IMAGES: Record<string, string> = {
   "Aperturas inclinadas con mancuernas": "/exercise-images/aperturas-inclinadas-mancuernas.png",
   "Cruce de poleas (cross over)": "/exercise-images/cruce-poleas.png",
   "Cruce de poleas alto": "/exercise-images/cruce-poleas-alto.png",
+  "Flexiones diamante": "/exercise-images/flexiones-diamante.png",
+  "Flexiones declinadas": "/exercise-images/flexiones-declinadas.png",
+  "Fondos en paralelas (pecho)": "/exercise-images/fondos-paralelas.png",
+  "Press de banca con barra": "/exercise-images/press-banca-barra.png",
+  "Press de banca con mancuernas": "/exercise-images/press-banca-mancuernas.png",
+  "Press de banca declinado con barra": "/exercise-images/press-banca-declinado-barra.png",
+  "Press de banca inclinado con barra": "/exercise-images/press-banca-inclinado-barra.png",
+  "Press en máquina": "/exercise-images/press-maquina.png",
 };
 
 export function getExerciseImageUrl(exerciseName: string): string | null {
