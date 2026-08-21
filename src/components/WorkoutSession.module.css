@@ -30,15 +30,6 @@
   border-radius: var(--radius-lg);
 }
 
-.exercisePose {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-3) var(--spacing-2);
-  background: color-mix(in srgb, var(--primary) 8%, var(--card));
-  border-radius: var(--radius-md);
-}
-
 .exerciseName {
   margin: 0;
   font-family: var(--font-family-display);

@@ -25,7 +25,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Spinner } from "@/components/ui/Spinner";
-import { ExercisePoseIcon } from "@/components/ExercisePoseIcon";
 import { useExercises } from "@/hooks/useExercises";
 import { useCreateUserRoutine } from "@/hooks/useUserRoutines";
 import type { Exercise, MuscleGroup } from "@/lib/exercises";
@@ -319,9 +318,6 @@ export default function CrearRutinaPage() {
                 className={`${styles.exerciseRow} ${inCart ? styles.exerciseRowActive : ""}`}
                 onClick={() => toggleExercise(exercise)}
               >
-                <div className={styles.exerciseIcon}>
-                  <ExercisePoseIcon exerciseName={exercise.name} muscleGroup={exercise.muscleGroup} width={76} />
-                </div>
                 <div className={styles.exerciseInfo}>
                   <p className={styles.exerciseName}>{exercise.name}</p>
                   <p className={styles.exerciseMeta}>
@@ -356,9 +352,6 @@ export default function CrearRutinaPage() {
               return (
                 <div key={item.exercise.id} className={styles.reviewCard}>
                   <div className={styles.reviewCardHeader}>
-                    <div className={styles.exerciseIcon}>
-                      <ExercisePoseIcon exerciseName={item.exercise.name} muscleGroup={item.exercise.muscleGroup} width={76} />
-                    </div>
                     <div className={styles.exerciseInfo}>
                       <p className={styles.exerciseName}>{item.exercise.name}</p>
                       <p className={styles.exerciseMeta}>

@@ -119,16 +119,6 @@
   background: color-mix(in srgb, var(--primary) 12%, var(--card));
 }
 
-.exerciseIcon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  padding: var(--spacing-1);
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--primary) 8%, var(--card));
-}
-
 .exerciseInfo {
   flex: 1;
   min-width: 0;
