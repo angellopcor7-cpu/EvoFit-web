@@ -218,6 +218,32 @@
   display: block;
 }
 
+.pickerOptions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.pickerOption {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-4);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--foreground);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--animation-duration-fast) ease;
+}
+
+.pickerOption:hover {
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+}
+
 .editForm {
   display: flex;
   flex-direction: column;

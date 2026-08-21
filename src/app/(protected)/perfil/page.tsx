@@ -8,6 +8,7 @@ import {
   Dumbbell,
   Settings,
   Camera,
+  Images,
   Lock,
   Loader2,
 } from "lucide-react";
@@ -44,9 +45,11 @@ export default function PerfilPage() {
   const profile = data?.profile;
   const initial = profile?.displayName?.trim().charAt(0).toUpperCase() ?? "A";
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
   const [pendingMilestone, setPendingMilestone] = useState<number | null>(null);
   const [viewingSlot, setViewingSlot] = useState<MilestoneSlot | null>(null);
+  const [pickerSlot, setPickerSlot] = useState<MilestoneSlot | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [editName, setEditName] = useState("");
 
@@ -89,8 +92,21 @@ export default function PerfilPage() {
       );
       return;
     }
-    setPendingMilestone(slot.index);
-    fileInputRef.current?.click();
+    setPickerSlot(slot);
+  };
+
+  const handleTakePhoto = () => {
+    if (!pickerSlot) return;
+    setPendingMilestone(pickerSlot.index);
+    setPickerSlot(null);
+    cameraInputRef.current?.click();
+  };
+
+  const handleChooseFromGallery = () => {
+    if (!pickerSlot) return;
+    setPendingMilestone(pickerSlot.index);
+    setPickerSlot(null);
+    galleryInputRef.current?.click();
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -190,7 +206,15 @@ export default function PerfilPage() {
           })}
         </div>
         <input
-          ref={fileInputRef}
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className={styles.hiddenFileInput}
+          onChange={handleFileChange}
+        />
+        <input
+          ref={galleryInputRef}
           type="file"
           accept="image/*"
           className={styles.hiddenFileInput}
@@ -229,6 +253,33 @@ export default function PerfilPage() {
               className={styles.viewerImg}
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={pickerSlot !== null} onOpenChange={(open) => !open && setPickerSlot(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{pickerSlot?.label}</DialogTitle>
+            <DialogDescription>Elige cómo quieres agregar la foto.</DialogDescription>
+          </DialogHeader>
+          <div className={styles.pickerOptions}>
+            <button
+              type="button"
+              className={styles.pickerOption}
+              onClick={handleTakePhoto}
+            >
+              <Camera size={20} />
+              Tomar foto
+            </button>
+            <button
+              type="button"
+              className={styles.pickerOption}
+              onClick={handleChooseFromGallery}
+            >
+              <Images size={20} />
+              Elegir de galería
+            </button>
+          </div>
         </DialogContent>
       </Dialog>
 
