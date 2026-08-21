@@ -29,7 +29,7 @@ import {
   DialogDescription,
 } from "@/components/ui/Dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
-import { MuscleIcon } from "@/components/MuscleIcon";
+import { ExercisePoseIcon } from "@/components/ExercisePoseIcon";
 import { WorkoutSession } from "@/components/WorkoutSession";
 import { useWorkoutRoutines } from "@/hooks/useWorkoutRoutines";
 import { useUserRoutines, useDeleteUserRoutine } from "@/hooks/useUserRoutines";
@@ -111,6 +111,7 @@ type DisplayExercise = {
   id: string;
   exerciseName: string;
   muscleGroup: MuscleGroup;
+  category: WorkoutCategory;
   sets: number;
   repsLabel: string | null;
   durationLabel: string | null;
@@ -258,7 +259,16 @@ export default function EntrenamientosPage() {
         routine.splitType === "sesion"
           ? `${routine.exercises.length} bloques · ${UI_CATEGORY_META[activeCategory].label}`
           : `${routine.exercises.length} ejercicios · Nivel ${LEVEL_LABEL[routine.level] ?? routine.level}`,
-      exercises: routine.exercises,
+      exercises: routine.exercises.map((e) => ({
+        id: e.id,
+        exerciseName: e.exerciseName,
+        muscleGroup: e.muscleGroup,
+        category: meta.workoutCategory,
+        sets: e.sets,
+        repsLabel: e.repsLabel,
+        durationLabel: e.durationLabel,
+        restLabel: e.restLabel,
+      })),
       category: meta.workoutCategory,
       workoutRoutineId: routine.id,
       userRoutineId: null,
@@ -273,6 +283,7 @@ export default function EntrenamientosPage() {
         id: e.id,
         exerciseName: e.exerciseName,
         muscleGroup: e.muscleGroup,
+        category: meta.workoutCategory,
         sets: e.sets,
         repsLabel: e.repsLabel,
         durationLabel: e.durationLabel,
@@ -517,23 +528,30 @@ export default function EntrenamientosPage() {
               <div className={styles.exerciseList}>
                 {selected.exercises.map((exercise) => (
                   <div key={exercise.id} className={styles.exerciseRow}>
-                    <div className={styles.exerciseRowIcon}>
-                      <MuscleIcon group={exercise.muscleGroup} size={22} />
+                    <div className={styles.exerciseRowTop}>
+                      <div className={styles.exerciseRowInfo}>
+                        <p className={styles.exerciseName}>
+                          {exercise.exerciseName}
+                        </p>
+                      </div>
+                      <div className={styles.exerciseMeta}>
+                        <span>
+                          {exercise.repsLabel
+                            ? `${exercise.sets} x ${exercise.repsLabel}`
+                            : exercise.durationLabel}
+                        </span>
+                        <span className={styles.exerciseRest}>
+                          <Timer size={12} /> {exercise.restLabel}
+                        </span>
+                      </div>
                     </div>
-                    <div className={styles.exerciseRowInfo}>
-                      <p className={styles.exerciseName}>
-                        {exercise.exerciseName}
-                      </p>
-                    </div>
-                    <div className={styles.exerciseMeta}>
-                      <span>
-                        {exercise.repsLabel
-                          ? `${exercise.sets} x ${exercise.repsLabel}`
-                          : exercise.durationLabel}
-                      </span>
-                      <span className={styles.exerciseRest}>
-                        <Timer size={12} /> {exercise.restLabel}
-                      </span>
+                    <div className={styles.exerciseRowPose}>
+                      <ExercisePoseIcon
+                        exerciseName={exercise.exerciseName}
+                        muscleGroup={exercise.muscleGroup}
+                        categoryHint={exercise.category}
+                        width={100}
+                      />
                     </div>
                   </div>
                 ))}

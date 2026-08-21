@@ -283,24 +283,27 @@
 
 .exerciseRow {
   display: flex;
-  align-items: center;
-  gap: var(--spacing-3);
+  flex-direction: column;
+  gap: var(--spacing-2);
   padding: var(--spacing-3);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
 }
 
-.exerciseRowIcon {
+.exerciseRowTop {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+}
+
+.exerciseRowPose {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  flex-shrink: 0;
-  border-radius: var(--radius-full);
-  background: color-mix(in srgb, var(--primary) 14%, var(--card));
-  color: var(--primary);
+  padding: var(--spacing-1) 0;
+  background: color-mix(in srgb, var(--primary) 6%, var(--card));
+  border-radius: var(--radius-sm);
 }
 
 .exerciseRowInfo {

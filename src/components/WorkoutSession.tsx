@@ -5,15 +5,17 @@ import { Check, SkipForward, Timer, PartyPopper } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Progress } from "@/components/ui/Progress";
 import { Spinner } from "@/components/ui/Spinner";
-import { MuscleIcon } from "@/components/MuscleIcon";
+import { ExercisePoseIcon } from "@/components/ExercisePoseIcon";
 import { parseSecondsLabel, formatTimer } from "@/lib/workoutTimer";
 import type { MuscleGroup } from "@/lib/exercises";
+import type { WorkoutCategory } from "@/lib/workouts";
 import styles from "./WorkoutSession.module.css";
 
 export type SessionExercise = {
   id: string;
   exerciseName: string;
   muscleGroup: MuscleGroup;
+  category: WorkoutCategory;
   sets: number;
   repsLabel: string | null;
   durationLabel: string | null;
@@ -167,8 +169,13 @@ export function WorkoutSession({
       </p>
 
       <div className={styles.exerciseCard}>
-        <div className={styles.exerciseIcon}>
-          <MuscleIcon group={current.muscleGroup} size={32} />
+        <div className={styles.exercisePose}>
+          <ExercisePoseIcon
+            exerciseName={current.exerciseName}
+            muscleGroup={current.muscleGroup}
+            categoryHint={current.category}
+            width={200}
+          />
         </div>
         <p className={styles.exerciseName}>{current.exerciseName}</p>
         <p className={styles.setLabel}>

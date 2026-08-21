@@ -30,15 +30,13 @@
   border-radius: var(--radius-lg);
 }
 
-.exerciseIcon {
+.exercisePose {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 3.5rem;
-  height: 3.5rem;
-  border-radius: var(--radius-full);
-  background: color-mix(in srgb, var(--primary) 14%, var(--card));
-  color: var(--primary);
+  padding: var(--spacing-3) var(--spacing-2);
+  background: color-mix(in srgb, var(--primary) 8%, var(--card));
+  border-radius: var(--radius-md);
 }
 
 .exerciseName {
