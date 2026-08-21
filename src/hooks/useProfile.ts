@@ -10,6 +10,7 @@ export type Profile = {
   currentStreak: number;
   longestStreak: number;
   lastActiveDate: string | null;
+  hasSeenWelcome: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -21,6 +22,7 @@ type ProfileRow = {
   current_streak: number;
   longest_streak: number;
   last_active_date: string | null;
+  has_seen_welcome: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -33,6 +35,7 @@ function mapProfile(row: ProfileRow): Profile {
     currentStreak: row.current_streak,
     longestStreak: row.longest_streak,
     lastActiveDate: row.last_active_date,
+    hasSeenWelcome: row.has_seen_welcome,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -81,6 +84,28 @@ export const useUpdateProfile = () => {
       const { error } = await supabase
         .from("profiles")
         .update({ display_name: input.displayName })
+        .eq("id", user.id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["auth", "session"] });
+    },
+  });
+};
+
+export const useMarkWelcomeSeen = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (): Promise<void> => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("No autenticado");
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({ has_seen_welcome: true })
         .eq("id", user.id);
       if (error) throw new Error(error.message);
     },
