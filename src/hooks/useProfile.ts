@@ -3,6 +3,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 
+export const BODY_TYPES = ["ectomorfo", "mesomorfo", "endomorfo"] as const;
+export type BodyType = (typeof BODY_TYPES)[number];
+
+export const BODY_TYPE_LABEL: Record<BodyType, string> = {
+  ectomorfo: "Ectomorfo",
+  mesomorfo: "Mesomorfo",
+  endomorfo: "Endomorfo",
+};
+
 export type Profile = {
   id: string;
   displayName: string;
@@ -11,6 +20,12 @@ export type Profile = {
   longestStreak: number;
   lastActiveDate: string | null;
   hasSeenWelcome: boolean;
+  weightKg: number | null;
+  heightCm: number | null;
+  age: number | null;
+  bodyType: BodyType | null;
+  allergies: string | null;
+  hasCompletedOnboarding: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -23,6 +38,12 @@ type ProfileRow = {
   longest_streak: number;
   last_active_date: string | null;
   has_seen_welcome: boolean;
+  weight_kg: number | null;
+  height_cm: number | null;
+  age: number | null;
+  body_type: string | null;
+  allergies: string | null;
+  has_completed_onboarding: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -36,6 +57,12 @@ function mapProfile(row: ProfileRow): Profile {
     longestStreak: row.longest_streak,
     lastActiveDate: row.last_active_date,
     hasSeenWelcome: row.has_seen_welcome,
+    weightKg: row.weight_kg,
+    heightCm: row.height_cm,
+    age: row.age,
+    bodyType: (row.body_type as BodyType | null) ?? null,
+    allergies: row.allergies,
+    hasCompletedOnboarding: row.has_completed_onboarding,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -106,6 +133,41 @@ export const useMarkWelcomeSeen = () => {
       const { error } = await supabase
         .from("profiles")
         .update({ has_seen_welcome: true })
+        .eq("id", user.id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["auth", "session"] });
+    },
+  });
+};
+
+export const useSaveBodyProfile = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      weightKg: number | null;
+      heightCm: number | null;
+      age: number | null;
+      bodyType: BodyType | null;
+      allergies: string | null;
+    }): Promise<void> => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("No autenticado");
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          weight_kg: input.weightKg,
+          height_cm: input.heightCm,
+          age: input.age,
+          body_type: input.bodyType,
+          allergies: input.allergies,
+          has_completed_onboarding: true,
+        })
         .eq("id", user.id);
       if (error) throw new Error(error.message);
     },
