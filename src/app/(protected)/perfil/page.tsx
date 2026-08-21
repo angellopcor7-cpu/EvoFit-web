@@ -1,12 +1,35 @@
 "use client";
 
-import { LogOut, Flame, TrendingUp, Dumbbell, Settings } from "lucide-react";
+import { useRef, useState } from "react";
+import {
+  LogOut,
+  Flame,
+  TrendingUp,
+  Dumbbell,
+  Settings,
+  Camera,
+  Lock,
+  Loader2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/Dialog";
 import { useAuthSession } from "@/hooks/useProfile";
 import { useLogout } from "@/hooks/useAuthActions";
 import { useWorkoutStats } from "@/hooks/useWorkoutCompletions";
+import { useProgressPhotos, useUploadProgressPhoto } from "@/hooks/useProgressPhotos";
+import {
+  buildMilestoneSlots,
+  formatShortDate,
+  type MilestoneSlot,
+} from "@/lib/progressPhotos";
 import styles from "./page.module.css";
 
 const comingSoon = () => toast.info("Editar perfil — muy pronto.");
@@ -16,8 +39,49 @@ export default function PerfilPage() {
   const { data } = useAuthSession();
   const logout = useLogout();
   const { data: stats } = useWorkoutStats();
+  const { data: photosData } = useProgressPhotos();
+  const uploadPhoto = useUploadProgressPhoto();
   const profile = data?.profile;
   const initial = profile?.displayName?.trim().charAt(0).toUpperCase() ?? "A";
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingMilestone, setPendingMilestone] = useState<number | null>(null);
+  const [viewingSlot, setViewingSlot] = useState<MilestoneSlot | null>(null);
+
+  const slots = buildMilestoneSlots(photosData?.photos ?? []);
+
+  const handleSlotClick = (slot: MilestoneSlot) => {
+    if (slot.status === "taken") {
+      setViewingSlot(slot);
+      return;
+    }
+    if (slot.status === "locked") {
+      toast.info(
+        slot.unlocksAt
+          ? `Disponible a partir del ${formatShortDate(slot.unlocksAt)}`
+          : "Todavía no disponible",
+      );
+      return;
+    }
+    setPendingMilestone(slot.index);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    const milestoneIndex = pendingMilestone;
+    event.target.value = "";
+    if (!file || milestoneIndex === null) return;
+
+    uploadPhoto.mutate(
+      { milestoneIndex, file },
+      {
+        onSuccess: () => toast.success("Foto guardada"),
+        onError: (error) =>
+          toast.error(error instanceof Error ? error.message : "No se pudo guardar la foto"),
+      },
+    );
+  };
 
   return (
     <div className={styles.page}>
@@ -57,6 +121,57 @@ export default function PerfilPage() {
         </div>
       </div>
 
+      <div className={styles.evolutionSection}>
+        <div className={styles.evolutionHeader}>
+          <h2 className={styles.evolutionTitle}>Evolución física</h2>
+          <p className={styles.evolutionSubtitle}>
+            Una foto el día 1, y luego una cada mes hasta completar el año.
+          </p>
+        </div>
+        <div className={styles.evolutionScroll}>
+          {slots.map((slot) => {
+            const isUploading =
+              uploadPhoto.isPending && pendingMilestone === slot.index;
+            return (
+              <button
+                key={slot.index}
+                type="button"
+                className={`${styles.milestoneCard} ${
+                  slot.status === "locked" ? styles.milestoneCardLocked : ""
+                }`}
+                onClick={() => handleSlotClick(slot)}
+                disabled={isUploading}
+              >
+                <div className={styles.milestoneThumb}>
+                  {slot.status === "taken" && slot.photo?.url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={slot.photo.url}
+                      alt={slot.label}
+                      className={styles.milestoneImg}
+                    />
+                  ) : isUploading ? (
+                    <Loader2 size={18} className={styles.milestoneSpinner} />
+                  ) : slot.status === "locked" ? (
+                    <Lock size={16} />
+                  ) : (
+                    <Camera size={18} />
+                  )}
+                </div>
+                <span className={styles.milestoneLabel}>{slot.label}</span>
+              </button>
+            );
+          })}
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className={styles.hiddenFileInput}
+          onChange={handleFileChange}
+        />
+      </div>
+
       <Button
         type="button"
         variant="destructive"
@@ -71,6 +186,25 @@ export default function PerfilPage() {
         <LogOut size={16} />
         {logout.isPending ? "Cerrando sesión..." : "Cerrar sesión"}
       </Button>
+
+      <Dialog open={viewingSlot !== null} onOpenChange={(open) => !open && setViewingSlot(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{viewingSlot?.label}</DialogTitle>
+            <DialogDescription>
+              {viewingSlot?.photo ? `Tomada el ${viewingSlot.photo.takenAt}` : ""}
+            </DialogDescription>
+          </DialogHeader>
+          {viewingSlot?.photo?.url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={viewingSlot.photo.url}
+              alt={viewingSlot.label}
+              className={styles.viewerImg}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
