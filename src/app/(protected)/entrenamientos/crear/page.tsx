@@ -6,6 +6,7 @@ import Link from "next/link";
 import {
   ArrowLeft,
   Check,
+  ChevronDown,
   Dumbbell,
   Shield,
   Zap,
@@ -28,6 +29,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { useExercises } from "@/hooks/useExercises";
 import { useCreateUserRoutine } from "@/hooks/useUserRoutines";
 import type { Exercise, MuscleGroup } from "@/lib/exercises";
+import { getExerciseImageUrl } from "@/lib/exerciseImages";
 import styles from "./page.module.css";
 
 const GROUP_META: Record<
@@ -103,6 +105,21 @@ export default function CrearRutinaPage() {
   );
   const [cart, setCart] = useState<Record<string, CartItem>>({});
   const [routineName, setRoutineName] = useState("");
+  const [expandedExerciseIds, setExpandedExerciseIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+
+  const toggleExerciseImage = (exerciseId: string) => {
+    setExpandedExerciseIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(exerciseId)) {
+        next.delete(exerciseId);
+      } else {
+        next.add(exerciseId);
+      }
+      return next;
+    });
+  };
 
   const exercises = data?.exercises ?? [];
 
@@ -311,28 +328,58 @@ export default function CrearRutinaPage() {
           )}
           {groupedExercises.map((exercise) => {
             const inCart = Boolean(cart[exercise.id]);
+            const imageUrl = getExerciseImageUrl(exercise.name);
+            const isExpanded = expandedExerciseIds.has(exercise.id);
             return (
-              <button
+              <div
                 key={exercise.id}
-                type="button"
                 className={`${styles.exerciseRow} ${inCart ? styles.exerciseRowActive : ""}`}
-                onClick={() => toggleExercise(exercise)}
               >
-                <div className={styles.exerciseInfo}>
-                  <p className={styles.exerciseName}>{exercise.name}</p>
-                  <p className={styles.exerciseMeta}>
-                    {exercise.defaultRepsLabel
-                      ? `${exercise.defaultSets} x ${exercise.defaultRepsLabel}`
-                      : `${exercise.defaultDurationLabel ?? ""}`}{" "}
-                    · Descanso {exercise.defaultRestLabel}
-                  </p>
-                </div>
-                <div
-                  className={`${styles.addIcon} ${inCart ? styles.addIconActive : ""}`}
+                <button
+                  type="button"
+                  className={styles.exerciseRowTop}
+                  onClick={() => toggleExercise(exercise)}
                 >
-                  {inCart ? <Check size={16} /> : <Plus size={16} />}
-                </div>
-              </button>
+                  <div className={styles.exerciseInfo}>
+                    <p className={styles.exerciseName}>{exercise.name}</p>
+                    <p className={styles.exerciseMeta}>
+                      {exercise.defaultRepsLabel
+                        ? `${exercise.defaultSets} x ${exercise.defaultRepsLabel}`
+                        : `${exercise.defaultDurationLabel ?? ""}`}{" "}
+                      · Descanso {exercise.defaultRestLabel}
+                    </p>
+                  </div>
+                  <div
+                    className={`${styles.addIcon} ${inCart ? styles.addIconActive : ""}`}
+                  >
+                    {inCart ? <Check size={16} /> : <Plus size={16} />}
+                  </div>
+                </button>
+                {imageUrl && (
+                  <button
+                    type="button"
+                    className={styles.imageToggle}
+                    onClick={() => toggleExerciseImage(exercise.id)}
+                    aria-expanded={isExpanded}
+                  >
+                    <span>Ver imagen</span>
+                    <ChevronDown
+                      size={14}
+                      className={`${styles.exerciseChevron} ${
+                        isExpanded ? styles.exerciseChevronOpen : ""
+                      }`}
+                    />
+                  </button>
+                )}
+                {imageUrl && isExpanded && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={imageUrl}
+                    alt={`Inicio y final: ${exercise.name}`}
+                    className={styles.exerciseImage}
+                  />
+                )}
+              </div>
             );
           })}
         </div>

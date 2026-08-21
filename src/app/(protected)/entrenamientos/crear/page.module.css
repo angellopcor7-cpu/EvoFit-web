@@ -101,22 +101,66 @@
 
 .exerciseRow {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-3);
+  flex-direction: column;
+  gap: var(--spacing-2);
   padding: var(--spacing-3) var(--spacing-4);
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  text-align: left;
-  font-family: inherit;
-  cursor: pointer;
   transition: border-color var(--animation-duration-fast) ease;
 }
 
 .exerciseRowActive {
   border-color: var(--primary);
   background: color-mix(in srgb, var(--primary) 12%, var(--card));
+}
+
+.exerciseRowTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: none;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.imageToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1) 0 0;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.exerciseChevron {
+  flex-shrink: 0;
+  color: var(--muted-foreground);
+  transition: transform var(--animation-duration-fast) ease;
+}
+
+.exerciseChevronOpen {
+  transform: rotate(180deg);
+  color: var(--primary);
+}
+
+.exerciseImage {
+  width: 100%;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--primary) 4%, var(--card));
+  display: block;
 }
 
 .exerciseInfo {
