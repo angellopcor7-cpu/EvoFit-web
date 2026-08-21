@@ -16,6 +16,7 @@ export const EXERCISE_IMAGES: Record<string, string> = {
   "Face pull": "/exercise-images/face-pull.png",
   "Hiperextensión (extensión lumbar)": "/exercise-images/hiperextension.png",
   // Pecho
+  "Flexiones de pecho": "/exercise-images/flexiones-pecho.png",
   "Aperturas con mancuernas": "/exercise-images/aperturas-mancuernas.png",
   "Aperturas en máquina (contractora)": "/exercise-images/aperturas-maquina-contractora.png",
   "Aperturas inclinadas con mancuernas": "/exercise-images/aperturas-inclinadas-mancuernas.png",
