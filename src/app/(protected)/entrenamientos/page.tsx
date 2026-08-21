@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/Dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
 import { WorkoutSession } from "@/components/WorkoutSession";
+import { getExerciseImageUrl } from "@/lib/exerciseImages";
 import { useWorkoutRoutines } from "@/hooks/useWorkoutRoutines";
 import { useUserRoutines, useDeleteUserRoutine } from "@/hooks/useUserRoutines";
 import { useCompleteWorkout } from "@/hooks/useWorkoutCompletions";
@@ -522,25 +523,38 @@ export default function EntrenamientosPage() {
                 <DialogDescription>{selected.subtitle}</DialogDescription>
               </DialogHeader>
               <div className={styles.exerciseList}>
-                {selected.exercises.map((exercise) => (
-                  <div key={exercise.id} className={styles.exerciseRow}>
-                    <div className={styles.exerciseRowInfo}>
-                      <p className={styles.exerciseName}>
-                        {exercise.exerciseName}
-                      </p>
+                {selected.exercises.map((exercise) => {
+                  const imageUrl = getExerciseImageUrl(exercise.exerciseName);
+                  return (
+                    <div key={exercise.id} className={styles.exerciseRow}>
+                      {imageUrl && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={imageUrl}
+                          alt={`Inicio y final: ${exercise.exerciseName}`}
+                          className={styles.exerciseImage}
+                        />
+                      )}
+                      <div className={styles.exerciseRowTop}>
+                        <div className={styles.exerciseRowInfo}>
+                          <p className={styles.exerciseName}>
+                            {exercise.exerciseName}
+                          </p>
+                        </div>
+                        <div className={styles.exerciseMeta}>
+                          <span>
+                            {exercise.repsLabel
+                              ? `${exercise.sets} x ${exercise.repsLabel}`
+                              : exercise.durationLabel}
+                          </span>
+                          <span className={styles.exerciseRest}>
+                            <Timer size={12} /> {exercise.restLabel}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div className={styles.exerciseMeta}>
-                      <span>
-                        {exercise.repsLabel
-                          ? `${exercise.sets} x ${exercise.repsLabel}`
-                          : exercise.durationLabel}
-                      </span>
-                      <span className={styles.exerciseRest}>
-                        <Timer size={12} /> {exercise.restLabel}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <Button
                 type="button"
