@@ -9,6 +9,7 @@ const BASE_URL =
 export const EXERCISE_IMAGES: Record<string, string> = {
   "Remo con barra": `${BASE_URL}/remo-con-barra.png`,
   "Jalón al pecho supinado": `${BASE_URL}/jalon-al-pecho-supinado.png`,
+  "Dominadas (barra fija)": `${BASE_URL}/dominadas.png`,
 };
 
 export function getExerciseImageUrl(exerciseName: string): string | null {
