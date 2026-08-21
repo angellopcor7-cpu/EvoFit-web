@@ -89,3 +89,42 @@ export const useUpdateProfile = () => {
     },
   });
 };
+
+const AVATARS_BUCKET = "avatars";
+
+export const useUploadAvatar = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { file: File }): Promise<void> => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("No autenticado");
+
+      const extension = input.file.type === "image/png" ? "png" : "jpg";
+      const path = `${user.id}/avatar.${extension}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from(AVATARS_BUCKET)
+        .upload(path, input.file, { upsert: true, contentType: input.file.type });
+      if (uploadError) throw new Error(uploadError.message);
+
+      const { data: publicData } = supabase.storage
+        .from(AVATARS_BUCKET)
+        .getPublicUrl(path);
+      // Cache-bust: la ruta es siempre la misma (upsert), así que sin esto el
+      // navegador podría seguir mostrando la foto vieja tras cambiarla.
+      const avatarUrl = `${publicData.publicUrl}?v=${Date.now()}`;
+
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ avatar_url: avatarUrl })
+        .eq("id", user.id);
+      if (updateError) throw new Error(updateError.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["auth", "session"] });
+    },
+  });
+};

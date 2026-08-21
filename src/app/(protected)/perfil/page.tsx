@@ -25,7 +25,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/Dialog";
-import { useAuthSession, useUpdateProfile } from "@/hooks/useProfile";
+import { useAuthSession, useUpdateProfile, useUploadAvatar } from "@/hooks/useProfile";
 import { useLogout } from "@/hooks/useAuthActions";
 import { useResetProgress } from "@/hooks/useResetProgress";
 import { useWorkoutStats } from "@/hooks/useWorkoutCompletions";
@@ -42,6 +42,7 @@ export default function PerfilPage() {
   const { data } = useAuthSession();
   const logout = useLogout();
   const updateProfile = useUpdateProfile();
+  const uploadAvatar = useUploadAvatar();
   const resetProgress = useResetProgress();
   const { data: stats } = useWorkoutStats();
   const { data: photosData } = useProgressPhotos();
@@ -51,9 +52,12 @@ export default function PerfilPage() {
 
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
+  const avatarCameraInputRef = useRef<HTMLInputElement>(null);
+  const avatarGalleryInputRef = useRef<HTMLInputElement>(null);
   const [pendingMilestone, setPendingMilestone] = useState<number | null>(null);
   const [viewingSlot, setViewingSlot] = useState<MilestoneSlot | null>(null);
   const [pickerSlot, setPickerSlot] = useState<MilestoneSlot | null>(null);
+  const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editName, setEditName] = useState("");
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
@@ -78,6 +82,33 @@ export default function PerfilPage() {
         },
         onError: (error) =>
           toast.error(error instanceof Error ? error.message : "No se pudo actualizar"),
+      },
+    );
+  };
+
+  const handleAvatarTakePhoto = () => {
+    setAvatarPickerOpen(false);
+    avatarCameraInputRef.current?.click();
+  };
+
+  const handleAvatarChooseFromGallery = () => {
+    setAvatarPickerOpen(false);
+    avatarGalleryInputRef.current?.click();
+  };
+
+  const handleAvatarFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    uploadAvatar.mutate(
+      { file },
+      {
+        onSuccess: () => toast.success("Foto de perfil actualizada"),
+        onError: (error) =>
+          toast.error(
+            error instanceof Error ? error.message : "No se pudo guardar la foto",
+          ),
       },
     );
   };
@@ -147,7 +178,26 @@ export default function PerfilPage() {
   return (
     <div className={styles.page}>
       <div className={styles.identity}>
-        <div className={styles.avatar}>{initial}</div>
+        <button
+          type="button"
+          className={styles.avatar}
+          onClick={openEdit}
+          aria-label="Configurar perfil"
+        >
+          {profile?.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={profile.avatarUrl}
+              alt="Foto de perfil"
+              className={styles.avatarImg}
+            />
+          ) : (
+            initial
+          )}
+          <span className={styles.avatarBadge}>
+            <Camera size={12} />
+          </span>
+        </button>
         <h1 className={styles.name}>{profile?.displayName ?? "Atleta"}</h1>
         <Button
           type="button"
@@ -302,6 +352,48 @@ export default function PerfilPage() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={avatarPickerOpen} onOpenChange={setAvatarPickerOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Foto de perfil</DialogTitle>
+            <DialogDescription>Elige cómo quieres agregar la foto.</DialogDescription>
+          </DialogHeader>
+          <div className={styles.pickerOptions}>
+            <button
+              type="button"
+              className={styles.pickerOption}
+              onClick={handleAvatarTakePhoto}
+            >
+              <Camera size={20} />
+              Tomar foto
+            </button>
+            <button
+              type="button"
+              className={styles.pickerOption}
+              onClick={handleAvatarChooseFromGallery}
+            >
+              <Images size={20} />
+              Elegir de galería
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      <input
+        ref={avatarCameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="user"
+        className={styles.hiddenFileInput}
+        onChange={handleAvatarFileChange}
+      />
+      <input
+        ref={avatarGalleryInputRef}
+        type="file"
+        accept="image/*"
+        className={styles.hiddenFileInput}
+        onChange={handleAvatarFileChange}
+      />
+
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent>
           <DialogHeader>
@@ -309,6 +401,31 @@ export default function PerfilPage() {
             <DialogDescription>Cambia el nombre que otros ven de ti.</DialogDescription>
           </DialogHeader>
           <div className={styles.editForm}>
+            <div className={styles.avatarEditRow}>
+              <div className={styles.avatarPreview}>
+                {uploadAvatar.isPending ? (
+                  <Loader2 size={20} className={styles.milestoneSpinner} />
+                ) : profile?.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={profile.avatarUrl}
+                    alt="Foto de perfil"
+                    className={styles.avatarImg}
+                  />
+                ) : (
+                  initial
+                )}
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setAvatarPickerOpen(true)}
+                disabled={uploadAvatar.isPending}
+              >
+                <Camera size={14} /> Cambiar foto
+              </Button>
+            </div>
             <Input
               placeholder="Tu nombre"
               value={editName}
