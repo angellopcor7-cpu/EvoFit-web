@@ -8,6 +8,7 @@ import {
   mapMealOptionRow,
   mapDietPlanRow,
   pickMealsForPlan,
+  parseAllergyTerms,
 } from "@/lib/diet";
 
 const schema = z.object({
@@ -44,6 +45,13 @@ export async function POST(request: Request) {
     const proteinPreferences =
       input.proteinPreferences ?? existing.proteinPreferences;
 
+    const { data: profileRow } = await supabase
+      .from("profiles")
+      .select("allergies")
+      .eq("id", user.id)
+      .maybeSingle();
+    const allergyTerms = parseAllergyTerms(profileRow?.allergies ?? null);
+
     const { data: optionRows, error: optionsError } = await supabase
       .from("diet_meal_options")
       .select("*")
@@ -61,6 +69,7 @@ export async function POST(request: Request) {
       options,
       proteinPreferences,
       excludeNames,
+      allergyTerms,
     );
 
     const { error: deleteError } = await supabase

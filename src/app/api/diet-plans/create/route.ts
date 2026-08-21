@@ -10,6 +10,7 @@ import {
   type DietMealOptionRow,
   mapMealOptionRow,
   pickMealsForPlan,
+  parseAllergyTerms,
 } from "@/lib/diet";
 import { ACTIVITY_LEVELS, SEX_OPTIONS, calculateDietTargets } from "@/lib/dietCalculations";
 
@@ -41,6 +42,13 @@ export async function POST(request: Request) {
 
     const targets = calculateDietTargets(input);
 
+    const { data: profileRow } = await supabase
+      .from("profiles")
+      .select("allergies")
+      .eq("id", user.id)
+      .maybeSingle();
+    const allergyTerms = parseAllergyTerms(profileRow?.allergies ?? null);
+
     const { data: optionRows, error: optionsError } = await supabase
       .from("diet_meal_options")
       .select("*")
@@ -53,7 +61,12 @@ export async function POST(request: Request) {
     const options = ((optionRows ?? []) as DietMealOptionRow[]).map(
       mapMealOptionRow,
     );
-    const meals = pickMealsForPlan(options, input.proteinPreferences);
+    const meals = pickMealsForPlan(
+      options,
+      input.proteinPreferences,
+      [],
+      allergyTerms,
+    );
 
     // Solo un plan activo por usuario: se borra el anterior (cascada a sus comidas).
     await supabase.from("user_diet_plans").delete().eq("user_id", user.id);

@@ -168,6 +168,20 @@
   color: var(--muted-foreground);
 }
 
+.allergyNote {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin: 0;
+  padding: var(--spacing-2) var(--spacing-3);
+  background: color-mix(in srgb, var(--warning) 12%, var(--card));
+  border: 1px solid color-mix(in srgb, var(--warning) 30%, var(--border));
+  border-radius: var(--radius-md);
+  color: var(--warning);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
 .mealList {
   display: flex;
   flex-direction: column;

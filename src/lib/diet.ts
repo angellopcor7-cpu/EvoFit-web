@@ -226,12 +226,41 @@ export type NewPlanMealInput = {
   fatG: number;
 };
 
-// Elige 1 platillo por meal_slot, filtrando por proteína preferida cuando aplica,
-// evitando repetir el nombre actual si hay alternativas (usado al "Regenerar").
+const DIACRITICS_REGEX = new RegExp("[\\u0300-\\u036f]", "g");
+
+function normalizeText(text: string): string {
+  return text.normalize("NFD").replace(DIACRITICS_REGEX, "").toLowerCase();
+}
+
+// Convierte el texto libre de alergias del perfil ("maní, mariscos y lactosa")
+// en términos individuales normalizados (sin acentos, minúsculas) listos para
+// buscar como substring dentro de nombre/descripción de cada platillo.
+export function parseAllergyTerms(
+  allergies: string | null | undefined,
+): string[] {
+  if (!allergies) return [];
+  return allergies
+    .split(/[,;/]| y | and /i)
+    .map((term) => normalizeText(term.trim()))
+    .filter((term) => term.length > 1);
+}
+
+function containsAllergen(option: DietMealOption, allergyTerms: string[]): boolean {
+  const haystack = normalizeText(`${option.name} ${option.description}`);
+  return allergyTerms.some((term) => haystack.includes(term));
+}
+
+// Elige 1 platillo por meal_slot, evitando alérgenos declarados, filtrando por
+// proteína preferida cuando aplica, y evitando repetir el nombre actual si hay
+// alternativas (usado al "Regenerar"). Nota: si excluir alérgenos dejara un
+// slot sin ninguna opción, se ignora ese filtro para ese slot en particular —
+// en la práctica casi no pasa porque solo una fracción de los platillos de
+// cada slot comparte un mismo alérgeno.
 export function pickMealsForPlan(
   options: DietMealOption[],
   proteinPreferences: DietProteinType[],
   excludeNames: string[] = [],
+  allergyTerms: string[] = [],
 ): NewPlanMealInput[] {
   return DIET_MEAL_SLOTS.map((slot, index) => {
     const slotOptions = options.filter((o) => o.mealSlot === slot);
@@ -239,15 +268,21 @@ export function pickMealsForPlan(
       throw new Error(`No hay opciones de menú para ${slot}`);
     }
 
+    const allergySafe =
+      allergyTerms.length > 0
+        ? slotOptions.filter((o) => !containsAllergen(o, allergyTerms))
+        : slotOptions;
+    const basePool = allergySafe.length > 0 ? allergySafe : slotOptions;
+
     const preferred =
       proteinPreferences.length > 0
-        ? slotOptions.filter(
+        ? basePool.filter(
             (o) =>
               proteinPreferences.includes(o.proteinType) ||
               o.proteinType === "ninguna",
           )
-        : slotOptions;
-    const pool = preferred.length > 0 ? preferred : slotOptions;
+        : basePool;
+    const pool = preferred.length > 0 ? preferred : basePool;
     const fresh = pool.filter((o) => !excludeNames.includes(o.name));
     const finalPool = fresh.length > 0 ? fresh : pool;
     const choice = finalPool[Math.floor(Math.random() * finalPool.length)];

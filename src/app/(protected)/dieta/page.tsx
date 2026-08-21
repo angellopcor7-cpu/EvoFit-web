@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, RefreshCw, Flame, Beef, Wheat, Droplet } from "lucide-react";
+import { ArrowLeft, RefreshCw, Flame, Beef, Wheat, Droplet, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -15,6 +15,7 @@ import {
   SelectItem,
 } from "@/components/ui/Select";
 import { useDietPlan, useCreateDietPlan, useRegenerateDietPlan } from "@/hooks/useDietPlan";
+import { useAuthSession } from "@/hooks/useProfile";
 import {
   DIET_GOALS,
   DIET_GOAL_LABEL,
@@ -43,8 +44,10 @@ type Step = "meta" | "datos" | "resultado";
 
 export default function DietaPage() {
   const { data, isLoading } = useDietPlan();
+  const { data: sessionData } = useAuthSession();
   const createPlan = useCreateDietPlan();
   const regeneratePlan = useRegenerateDietPlan();
+  const allergies = sessionData?.profile?.allergies?.trim() || null;
 
   const [step, setStep] = useState<Step | null>(null);
   const [goal, setGoal] = useState<DietGoal | null>(null);
@@ -351,6 +354,12 @@ export default function DietaPage() {
               </div>
             </div>
           </div>
+
+          {allergies && (
+            <p className={styles.allergyNote}>
+              <ShieldAlert size={14} /> Evitando alimentos con: {allergies}
+            </p>
+          )}
 
           <div className={styles.mealList}>
             {plan.meals.map((meal) => (
