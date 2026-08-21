@@ -30,6 +30,10 @@ export const EXERCISE_IMAGES: Record<string, string> = {
   "Press de banca declinado con barra": "/exercise-images/press-banca-declinado-barra.png",
   "Press de banca inclinado con barra": "/exercise-images/press-banca-inclinado-barra.png",
   "Press en máquina": "/exercise-images/press-maquina.png",
+  "Press en Smith inclinado": "/exercise-images/press-smith-inclinado.png",
+  "Press inclinado con mancuernas": "/exercise-images/press-inclinado-mancuernas.png",
+  "Press inclinado en máquina": "/exercise-images/press-inclinado-maquina.png",
+  "Pullover con mancuerna": "/exercise-images/pullover-mancuerna.png",
 };
 
 export function getExerciseImageUrl(exerciseName: string): string | null {
