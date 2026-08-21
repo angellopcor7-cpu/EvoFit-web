@@ -22,6 +22,7 @@ export const EXERCISE_IMAGES: Record<string, string> = {
   "Aperturas inclinadas con mancuernas": "/exercise-images/aperturas-inclinadas-mancuernas.png",
   "Cruce de poleas (cross over)": "/exercise-images/cruce-poleas.png",
   "Cruce de poleas alto": "/exercise-images/cruce-poleas-alto.png",
+  "Cruce de poleas bajo": "/exercise-images/cruce-poleas-bajo.png",
   "Flexiones diamante": "/exercise-images/flexiones-diamante.png",
   "Flexiones declinadas": "/exercise-images/flexiones-declinadas.png",
   "Fondos en paralelas (pecho)": "/exercise-images/fondos-paralelas.png",
