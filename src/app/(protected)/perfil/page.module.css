@@ -217,3 +217,14 @@
   border-radius: var(--radius-md);
   display: block;
 }
+
+.editForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.saveProfileButton {
+  width: 100%;
+  border-radius: var(--radius-full);
+}

@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import {
   Dialog,
   DialogContent,
@@ -21,7 +22,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/Dialog";
-import { useAuthSession } from "@/hooks/useProfile";
+import { useAuthSession, useUpdateProfile } from "@/hooks/useProfile";
 import { useLogout } from "@/hooks/useAuthActions";
 import { useWorkoutStats } from "@/hooks/useWorkoutCompletions";
 import { useProgressPhotos, useUploadProgressPhoto } from "@/hooks/useProgressPhotos";
@@ -32,12 +33,11 @@ import {
 } from "@/lib/progressPhotos";
 import styles from "./page.module.css";
 
-const comingSoon = () => toast.info("Editar perfil — muy pronto.");
-
 export default function PerfilPage() {
   const router = useRouter();
   const { data } = useAuthSession();
   const logout = useLogout();
+  const updateProfile = useUpdateProfile();
   const { data: stats } = useWorkoutStats();
   const { data: photosData } = useProgressPhotos();
   const uploadPhoto = useUploadProgressPhoto();
@@ -47,6 +47,32 @@ export default function PerfilPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingMilestone, setPendingMilestone] = useState<number | null>(null);
   const [viewingSlot, setViewingSlot] = useState<MilestoneSlot | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editName, setEditName] = useState("");
+
+  const openEdit = () => {
+    setEditName(profile?.displayName ?? "");
+    setEditOpen(true);
+  };
+
+  const handleSaveProfile = () => {
+    const trimmed = editName.trim();
+    if (!trimmed) {
+      toast.error("Ponle un nombre a tu perfil");
+      return;
+    }
+    updateProfile.mutate(
+      { displayName: trimmed },
+      {
+        onSuccess: () => {
+          toast.success("Perfil actualizado");
+          setEditOpen(false);
+        },
+        onError: (error) =>
+          toast.error(error instanceof Error ? error.message : "No se pudo actualizar"),
+      },
+    );
+  };
 
   const slots = buildMilestoneSlots(photosData?.photos ?? []);
 
@@ -92,7 +118,7 @@ export default function PerfilPage() {
           type="button"
           variant="outline"
           size="sm"
-          onClick={comingSoon}
+          onClick={openEdit}
           className={styles.editButton}
         >
           <Settings size={14} /> Editar perfil
@@ -203,6 +229,31 @@ export default function PerfilPage() {
               className={styles.viewerImg}
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar perfil</DialogTitle>
+            <DialogDescription>Cambia el nombre que otros ven de ti.</DialogDescription>
+          </DialogHeader>
+          <div className={styles.editForm}>
+            <Input
+              placeholder="Tu nombre"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              maxLength={40}
+            />
+            <Button
+              type="button"
+              className={styles.saveProfileButton}
+              onClick={handleSaveProfile}
+              disabled={updateProfile.isPending}
+            >
+              {updateProfile.isPending ? "Guardando..." : "Guardar"}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
