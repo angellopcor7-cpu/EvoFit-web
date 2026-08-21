@@ -63,6 +63,17 @@ export default function DietaPage() {
     }
   }, [data, step]);
 
+  // Cada día, al abrir la pantalla, se regenera el menú automáticamente para
+  // variar las comidas — solo si todavía no se regeneró hoy.
+  useEffect(() => {
+    const plan = data?.plan;
+    if (!plan) return;
+    const todayUtc = new Date().toISOString().slice(0, 10);
+    if (plan.mealsGeneratedOn === todayUtc) return;
+    regeneratePlan.mutate({ proteinPreferences: plan.proteinPreferences });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.plan?.id, data?.plan?.mealsGeneratedOn]);
+
   const toggleProtein = (protein: DietProteinType) => {
     setProteinPreferences((prev) =>
       prev.includes(protein)

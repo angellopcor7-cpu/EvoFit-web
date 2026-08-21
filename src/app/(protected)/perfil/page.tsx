@@ -11,6 +11,8 @@ import {
   Images,
   Lock,
   Loader2,
+  AlertTriangle,
+  RotateCcw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -25,6 +27,7 @@ import {
 } from "@/components/ui/Dialog";
 import { useAuthSession, useUpdateProfile } from "@/hooks/useProfile";
 import { useLogout } from "@/hooks/useAuthActions";
+import { useResetProgress } from "@/hooks/useResetProgress";
 import { useWorkoutStats } from "@/hooks/useWorkoutCompletions";
 import { useProgressPhotos, useUploadProgressPhoto } from "@/hooks/useProgressPhotos";
 import {
@@ -39,6 +42,7 @@ export default function PerfilPage() {
   const { data } = useAuthSession();
   const logout = useLogout();
   const updateProfile = useUpdateProfile();
+  const resetProgress = useResetProgress();
   const { data: stats } = useWorkoutStats();
   const { data: photosData } = useProgressPhotos();
   const uploadPhoto = useUploadProgressPhoto();
@@ -52,6 +56,7 @@ export default function PerfilPage() {
   const [pickerSlot, setPickerSlot] = useState<MilestoneSlot | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [editName, setEditName] = useState("");
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
 
   const openEdit = () => {
     setEditName(profile?.displayName ?? "");
@@ -75,6 +80,20 @@ export default function PerfilPage() {
           toast.error(error instanceof Error ? error.message : "No se pudo actualizar"),
       },
     );
+  };
+
+  const handleResetProgress = () => {
+    resetProgress.mutate(undefined, {
+      onSuccess: () => {
+        toast.success("Tu progreso se reinició");
+        setResetConfirmOpen(false);
+        setEditOpen(false);
+      },
+      onError: (error) =>
+        toast.error(
+          error instanceof Error ? error.message : "No se pudo reiniciar tu progreso",
+        ),
+    });
   };
 
   const slots = buildMilestoneSlots(photosData?.photos ?? []);
@@ -303,6 +322,53 @@ export default function PerfilPage() {
               disabled={updateProfile.isPending}
             >
               {updateProfile.isPending ? "Guardando..." : "Guardar"}
+            </Button>
+
+            <div className={styles.dangerZone}>
+              <Button
+                type="button"
+                variant="outline"
+                className={styles.resetProgressButton}
+                onClick={() => setResetConfirmOpen(true)}
+              >
+                <RotateCcw size={14} /> Reiniciar progreso
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className={styles.resetWarningTitle}>
+              <AlertTriangle size={18} /> Reiniciar progreso
+            </DialogTitle>
+            <DialogDescription>
+              Esto va a borrar tu dieta actual, tus estadísticas (rachas y
+              entrenamientos registrados) y todas tus rutinas guardadas. No se
+              puede deshacer. Tus metas y tus fotos de evolución física no se
+              tocan.
+            </DialogDescription>
+          </DialogHeader>
+          <div className={styles.editForm}>
+            <Button
+              type="button"
+              variant="destructive"
+              className={styles.saveProfileButton}
+              onClick={handleResetProgress}
+              disabled={resetProgress.isPending}
+            >
+              {resetProgress.isPending ? "Reiniciando..." : "Sí, reiniciar todo"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className={styles.saveProfileButton}
+              onClick={() => setResetConfirmOpen(false)}
+              disabled={resetProgress.isPending}
+            >
+              Cancelar
             </Button>
           </div>
         </DialogContent>

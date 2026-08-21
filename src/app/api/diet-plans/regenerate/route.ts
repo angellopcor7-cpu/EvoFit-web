@@ -11,7 +11,7 @@ import {
 } from "@/lib/diet";
 
 const schema = z.object({
-  proteinPreferences: z.array(z.enum(DIET_PROTEIN_TYPES)).max(6),
+  proteinPreferences: z.array(z.enum(DIET_PROTEIN_TYPES)).max(6).optional(),
 });
 
 export async function POST(request: Request) {
@@ -41,6 +41,8 @@ export async function POST(request: Request) {
       throw new Error("Todavía no tienes un plan de alimentación activo");
     }
     const existing = mapDietPlanRow(existingRow);
+    const proteinPreferences =
+      input.proteinPreferences ?? existing.proteinPreferences;
 
     const { data: optionRows, error: optionsError } = await supabase
       .from("diet_meal_options")
@@ -57,7 +59,7 @@ export async function POST(request: Request) {
     const excludeNames = existing.meals.map((m) => m.name);
     const meals = pickMealsForPlan(
       options,
-      input.proteinPreferences,
+      proteinPreferences,
       excludeNames,
     );
 
@@ -85,15 +87,22 @@ export async function POST(request: Request) {
       .select();
     if (insertError) throw new Error(insertError.message);
 
+    const todayStr = new Date().toISOString().slice(0, 10);
     await supabase
       .from("user_diet_plans")
-      .update({ updated_at: new Date().toISOString() })
+      .update({
+        updated_at: new Date().toISOString(),
+        protein_preferences: proteinPreferences,
+        meals_generated_on: todayStr,
+      })
       .eq("id", existing.id);
 
     return NextResponse.json({
       plan: {
         ...existing,
         updatedAt: new Date().toISOString(),
+        proteinPreferences,
+        mealsGeneratedOn: todayStr,
         meals: (mealRows ?? [])
           .sort((a, b) => a.order_index - b.order_index)
           .map((m) => ({

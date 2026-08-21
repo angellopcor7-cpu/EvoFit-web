@@ -254,3 +254,27 @@
   width: 100%;
   border-radius: var(--radius-full);
 }
+
+.dangerZone {
+  margin-top: var(--spacing-2);
+  padding-top: var(--spacing-3);
+  border-top: 1px solid var(--border);
+}
+
+.resetProgressButton {
+  width: 100%;
+  border-radius: var(--radius-full);
+  color: var(--error);
+  border-color: color-mix(in srgb, var(--error) 40%, var(--border));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-1);
+}
+
+.resetWarningTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  color: var(--error);
+}

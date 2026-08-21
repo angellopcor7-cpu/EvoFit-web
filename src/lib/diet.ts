@@ -152,6 +152,8 @@ export type DietPlan = {
   mealsPerDay: number;
   createdAt: string;
   updatedAt: string;
+  proteinPreferences: DietProteinType[];
+  mealsGeneratedOn: string;
   meals: DietPlanMeal[];
 };
 
@@ -167,6 +169,8 @@ export type DietPlanRow = {
   meals_per_day: number;
   created_at: string;
   updated_at: string;
+  protein_preferences: string[];
+  meals_generated_on: string;
   user_diet_plan_meals: {
     id: string;
     meal_slot: string;
@@ -193,6 +197,8 @@ export function mapDietPlanRow(row: DietPlanRow): DietPlan {
     mealsPerDay: row.meals_per_day,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    proteinPreferences: (row.protein_preferences ?? []) as DietProteinType[],
+    mealsGeneratedOn: row.meals_generated_on,
     meals: [...row.user_diet_plan_meals]
       .sort((a, b) => a.order_index - b.order_index)
       .map((m) => ({

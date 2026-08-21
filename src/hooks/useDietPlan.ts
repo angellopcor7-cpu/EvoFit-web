@@ -78,7 +78,7 @@ export const useCreateDietPlan = () => {
 export const useRegenerateDietPlan = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: { proteinPreferences: DietProteinType[] }) =>
+    mutationFn: (input: { proteinPreferences?: DietProteinType[] } = {}) =>
       postJson<{ plan: DietPlan }>("/api/diet-plans/regenerate", input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });

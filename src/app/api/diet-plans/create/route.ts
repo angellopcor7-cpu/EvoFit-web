@@ -70,6 +70,7 @@ export async function POST(request: Request) {
         target_carbs_g: targets.targetCarbsG,
         target_fat_g: targets.targetFatG,
         meals_per_day: DIET_MEAL_SLOTS.length,
+        protein_preferences: input.proteinPreferences,
       })
       .select()
       .single();
@@ -110,6 +111,8 @@ export async function POST(request: Request) {
         mealsPerDay: planRow.meals_per_day,
         createdAt: planRow.created_at,
         updatedAt: planRow.updated_at,
+        proteinPreferences: planRow.protein_preferences,
+        mealsGeneratedOn: planRow.meals_generated_on,
         meals: (mealRows ?? [])
           .sort((a, b) => a.order_index - b.order_index)
           .map((m) => ({
