@@ -1,5 +1,15 @@
 import type { MuscleGroup } from "@/lib/exercises";
 
+export const BODY_TYPES = ["ectomorfo", "mesomorfo", "endomorfo"] as const;
+
+export type BodyType = (typeof BODY_TYPES)[number];
+
+export const BODY_TYPE_LABEL: Record<BodyType, string> = {
+  ectomorfo: "Ectomorfo",
+  mesomorfo: "Mesomorfo",
+  endomorfo: "Endomorfo",
+};
+
 export const WORKOUT_CATEGORIES = [
   "musculacion",
   "calistenia",
@@ -45,6 +55,7 @@ export type WorkoutRoutine = {
   optionNumber: number;
   dayLabel: string | null;
   title: string;
+  bodyType: BodyType | null;
   exercises: WorkoutExercise[];
 };
 
@@ -57,6 +68,7 @@ export type RoutineRow = {
   day_label: string | null;
   title: string;
   order_index: number;
+  body_type: string | null;
   routine_exercises: {
     id: string;
     order_index: number;
@@ -78,6 +90,7 @@ export function mapRoutineRow(row: RoutineRow): WorkoutRoutine {
     optionNumber: row.option_number,
     dayLabel: row.day_label,
     title: row.title,
+    bodyType: (row.body_type as BodyType | null) ?? null,
     exercises: [...row.routine_exercises]
       .sort((a, b) => a.order_index - b.order_index)
       .map((e) => ({

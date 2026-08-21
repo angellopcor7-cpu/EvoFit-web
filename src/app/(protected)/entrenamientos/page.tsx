@@ -35,7 +35,12 @@ import { getExerciseImageUrl } from "@/lib/exerciseImages";
 import { useWorkoutRoutines } from "@/hooks/useWorkoutRoutines";
 import { useUserRoutines, useDeleteUserRoutine } from "@/hooks/useUserRoutines";
 import { useCompleteWorkout } from "@/hooks/useWorkoutCompletions";
-import type { WorkoutCategory, WorkoutRoutine } from "@/lib/workouts";
+import {
+  BODY_TYPES,
+  BODY_TYPE_LABEL,
+  type WorkoutCategory,
+  type WorkoutRoutine,
+} from "@/lib/workouts";
 import type { UserRoutine } from "@/lib/userRoutines";
 import type { MuscleGroup } from "@/lib/exercises";
 import styles from "./page.module.css";
@@ -215,6 +220,7 @@ export default function EntrenamientosPage() {
   );
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+  const [selectedBodyType, setSelectedBodyType] = useState<string | null>(null);
   const [expandedExerciseIds, setExpandedExerciseIds] = useState<Set<string>>(
     () => new Set(),
   );
@@ -241,6 +247,7 @@ export default function EntrenamientosPage() {
   );
 
   const showGroupChips = activeCategory === "musculacion" || activeCategory === "calistenia";
+  const showBodyTypeChips = activeCategory === "musculacion";
 
   const availableLevels = useMemo(() => {
     const present = new Set(categoryRoutines.map((r) => r.level));
@@ -253,18 +260,26 @@ export default function EntrenamientosPage() {
     return (GROUP_ORDER[activeCategory] ?? []).filter((g) => present.has(g));
   }, [categoryRoutines, showGroupChips, activeCategory]);
 
+  const availableBodyTypes = useMemo(() => {
+    if (!showBodyTypeChips) return [];
+    const present = new Set(categoryRoutines.map((r) => r.bodyType).filter(Boolean));
+    return BODY_TYPES.filter((bt) => present.has(bt));
+  }, [categoryRoutines, showBodyTypeChips]);
+
   const filteredRoutines = useMemo(() => {
     return categoryRoutines.filter(
       (routine) =>
         (!selectedLevel || routine.level === selectedLevel) &&
-        (!selectedGroup || routine.dayLabel === selectedGroup),
+        (!selectedGroup || routine.dayLabel === selectedGroup) &&
+        (!selectedBodyType || routine.bodyType === selectedBodyType),
     );
-  }, [categoryRoutines, selectedLevel, selectedGroup]);
+  }, [categoryRoutines, selectedLevel, selectedGroup, selectedBodyType]);
 
   const selectCategory = (category: UiCategory) => {
     setActiveCategory(category);
     setSelectedLevel(null);
     setSelectedGroup(null);
+    setSelectedBodyType(null);
   };
 
   const selectPackRoutine = (routine: WorkoutRoutine) => {
@@ -346,7 +361,7 @@ export default function EntrenamientosPage() {
     (isFetchingUser && myRoutines.length === 0);
 
   const renderFilters = () => {
-    if (!showGroupChips && availableLevels.length <= 1) return null;
+    if (!showGroupChips && !showBodyTypeChips && availableLevels.length <= 1) return null;
     return (
       <div className={styles.filters}>
         {showGroupChips && availableGroups.length > 1 && (
@@ -357,6 +372,17 @@ export default function EntrenamientosPage() {
             options={[
               { value: null, label: "Todos" },
               ...availableGroups.map((g) => ({ value: g, label: g })),
+            ]}
+          />
+        )}
+        {showBodyTypeChips && availableBodyTypes.length > 1 && (
+          <FilterChips
+            label="Tipo de cuerpo"
+            active={selectedBodyType}
+            onSelect={setSelectedBodyType}
+            options={[
+              { value: null, label: "Todos" },
+              ...availableBodyTypes.map((bt) => ({ value: bt, label: BODY_TYPE_LABEL[bt] })),
             ]}
           />
         )}
@@ -503,13 +529,6 @@ export default function EntrenamientosPage() {
           {renderFilters()}
           {renderRoutineList(`Todavía no hay sesiones para ${meta.label}.`)}
         </>
-      )}
-
-      {meta.mode === "catalog" && (
-        <p className={styles.note}>
-          Seguimos digitalizando tu pack — las fichas de Nivel Intermedio
-          (Fullbody/AB/ABC) están pendientes por verificar antes de sumarlas.
-        </p>
       )}
 
       <Dialog
