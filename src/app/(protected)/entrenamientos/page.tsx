@@ -17,6 +17,7 @@ import {
   Play,
   Timer,
   Trash2,
+  ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
@@ -214,6 +215,21 @@ export default function EntrenamientosPage() {
   );
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+  const [expandedExerciseIds, setExpandedExerciseIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+
+  const toggleExerciseImage = (exerciseId: string) => {
+    setExpandedExerciseIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(exerciseId)) {
+        next.delete(exerciseId);
+      } else {
+        next.add(exerciseId);
+      }
+      return next;
+    });
+  };
 
   const allRoutines = data?.routines ?? [];
   const myRoutines = userData?.routines ?? [];
@@ -525,17 +541,20 @@ export default function EntrenamientosPage() {
               <div className={styles.exerciseList}>
                 {selected.exercises.map((exercise) => {
                   const imageUrl = getExerciseImageUrl(exercise.exerciseName);
+                  const isExpanded = expandedExerciseIds.has(exercise.id);
                   return (
                     <div key={exercise.id} className={styles.exerciseRow}>
-                      {imageUrl && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={imageUrl}
-                          alt={`Inicio y final: ${exercise.exerciseName}`}
-                          className={styles.exerciseImage}
-                        />
-                      )}
-                      <div className={styles.exerciseRowTop}>
+                      <button
+                        type="button"
+                        className={styles.exerciseRowTop}
+                        onClick={() =>
+                          imageUrl && toggleExerciseImage(exercise.id)
+                        }
+                        aria-expanded={imageUrl ? isExpanded : undefined}
+                        style={
+                          imageUrl ? undefined : { cursor: "default" }
+                        }
+                      >
                         <div className={styles.exerciseRowInfo}>
                           <p className={styles.exerciseName}>
                             {exercise.exerciseName}
@@ -551,7 +570,23 @@ export default function EntrenamientosPage() {
                             <Timer size={12} /> {exercise.restLabel}
                           </span>
                         </div>
-                      </div>
+                        {imageUrl && (
+                          <ChevronDown
+                            size={16}
+                            className={`${styles.exerciseChevron} ${
+                              isExpanded ? styles.exerciseChevronOpen : ""
+                            }`}
+                          />
+                        )}
+                      </button>
+                      {imageUrl && isExpanded && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={imageUrl}
+                          alt={`Inicio y final: ${exercise.exerciseName}`}
+                          className={styles.exerciseImage}
+                        />
+                      )}
                     </div>
                   );
                 })}

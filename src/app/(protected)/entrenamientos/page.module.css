@@ -302,6 +302,25 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-3);
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: none;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+
+.exerciseChevron {
+  flex-shrink: 0;
+  color: var(--muted-foreground);
+  transition: transform var(--animation-duration-fast) ease;
+}
+
+.exerciseChevronOpen {
+  transform: rotate(180deg);
+  color: var(--primary);
 }
 
 .exerciseRowInfo {
