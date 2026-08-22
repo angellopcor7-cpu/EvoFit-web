@@ -24,6 +24,15 @@ export const BODY_TYPE_DESCRIPTION: Record<BodyType, string> = {
     "Complexión más robusta o redondeada, sube de peso con facilidad, metabolismo más lento.",
 };
 
+export const SEX_OPTIONS = ["hombre", "mujer", "no_binario"] as const;
+export type Sex = (typeof SEX_OPTIONS)[number];
+
+export const SEX_LABEL: Record<Sex, string> = {
+  hombre: "Hombre",
+  mujer: "Mujer",
+  no_binario: "No binario",
+};
+
 export type Profile = {
   id: string;
   displayName: string;
@@ -35,6 +44,7 @@ export type Profile = {
   weightKg: number | null;
   heightCm: number | null;
   age: number | null;
+  sex: Sex | null;
   bodyType: BodyType | null;
   allergies: string | null;
   hasCompletedOnboarding: boolean;
@@ -55,6 +65,7 @@ type ProfileRow = {
   weight_kg: number | null;
   height_cm: number | null;
   age: number | null;
+  sex: string | null;
   body_type: string | null;
   allergies: string | null;
   has_completed_onboarding: boolean;
@@ -76,6 +87,7 @@ function mapProfile(row: ProfileRow): Profile {
     weightKg: row.weight_kg,
     heightCm: row.height_cm,
     age: row.age,
+    sex: (row.sex as Sex | null) ?? null,
     bodyType: (row.body_type as BodyType | null) ?? null,
     allergies: row.allergies,
     hasCompletedOnboarding: row.has_completed_onboarding,
@@ -167,6 +179,7 @@ export const useSaveBodyProfile = () => {
       weightKg: number | null;
       heightCm: number | null;
       age: number | null;
+      sex: Sex | null;
       bodyType: BodyType | null;
       allergies: string | null;
     }): Promise<void> => {
@@ -182,6 +195,7 @@ export const useSaveBodyProfile = () => {
           weight_kg: input.weightKg,
           height_cm: input.heightCm,
           age: input.age,
+          sex: input.sex,
           body_type: input.bodyType,
           allergies: input.allergies,
           has_completed_onboarding: true,

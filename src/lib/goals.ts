@@ -50,6 +50,23 @@ export function goalProgress(goal: Goal): number {
   return Math.max(0, Math.min(100, Math.round((goal.currentValue / goal.targetValue) * 100)));
 }
 
+// Opciones rápidas de tiempo límite para cuando se crea una meta desde el
+// onboarding — la persona elige "en cuánto tiempo" en vez de tener que
+// pensar una fecha exacta de calendario.
+export const GOAL_DEADLINE_PRESETS: { label: string; days: number }[] = [
+  { label: "1 semana", days: 7 },
+  { label: "2 semanas", days: 14 },
+  { label: "1 mes", days: 30 },
+  { label: "3 meses", days: 90 },
+  { label: "6 meses", days: 180 },
+];
+
+export function addDaysIso(days: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
 export function goalDeadlineLabel(targetDate: string | null): string | null {
   if (!targetDate) return null;
   const target = new Date(`${targetDate}T00:00:00`);

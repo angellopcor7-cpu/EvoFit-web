@@ -31,6 +31,43 @@
   line-height: 1.4;
 }
 
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+}
+
+.chip {
+  padding: var(--spacing-2) var(--spacing-3);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  color: var(--muted-foreground);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color var(--animation-duration-fast) ease,
+    color var(--animation-duration-fast) ease;
+}
+
+.chipActive {
+  background: color-mix(in srgb, var(--primary) 16%, var(--card));
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.valueRow {
+  display: flex;
+  gap: var(--spacing-2);
+}
+
+.valueRow > * {
+  flex: 1;
+  min-width: 0;
+}
+
 .bodyTypeList {
   display: flex;
   flex-direction: column;
