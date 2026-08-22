@@ -12,6 +12,18 @@ export const BODY_TYPE_LABEL: Record<BodyType, string> = {
   endomorfo: "Endomorfo",
 };
 
+// Explicación corta para que la persona pueda identificar su tipo de cuerpo
+// sin salir del onboarding — a petición del usuario, que notó que alguien
+// llenando sus datos no sabía cuál de los tres le tocaba.
+export const BODY_TYPE_DESCRIPTION: Record<BodyType, string> = {
+  ectomorfo:
+    "Delgado de forma natural, cuesta subir de peso o músculo, extremidades largas y metabolismo rápido.",
+  mesomorfo:
+    "Complexión atlética, gana músculo con relativa facilidad, hombros más anchos que la cintura.",
+  endomorfo:
+    "Complexión más robusta o redondeada, sube de peso con facilidad, metabolismo más lento.",
+};
+
 export type Profile = {
   id: string;
   displayName: string;

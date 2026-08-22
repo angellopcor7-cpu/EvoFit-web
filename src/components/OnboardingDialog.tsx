@@ -16,6 +16,7 @@ import {
   useSaveBodyProfile,
   BODY_TYPES,
   BODY_TYPE_LABEL,
+  BODY_TYPE_DESCRIPTION,
   type BodyType,
 } from "@/hooks/useProfile";
 import styles from "./OnboardingDialog.module.css";
@@ -116,15 +117,26 @@ export const OnboardingDialog = () => {
 
           <div className={styles.fieldRow}>
             <span className={styles.fieldLabel}>Tipo de cuerpo</span>
-            <div className={styles.chipGrid}>
+            <p className={styles.fieldHint}>
+              Si no sabes cuál eres, lee las descripciones y elige la que más
+              se parezca a ti — no tiene que ser exacto.
+            </p>
+            <div className={styles.bodyTypeList}>
               {BODY_TYPES.map((type) => (
                 <button
                   key={type}
                   type="button"
-                  className={`${styles.chip} ${bodyType === type ? styles.chipActive : ""}`}
+                  className={`${styles.bodyTypeOption} ${
+                    bodyType === type ? styles.bodyTypeOptionActive : ""
+                  }`}
                   onClick={() => setBodyType(type)}
                 >
-                  {BODY_TYPE_LABEL[type]}
+                  <span className={styles.bodyTypeName}>
+                    {BODY_TYPE_LABEL[type]}
+                  </span>
+                  <span className={styles.bodyTypeDescription}>
+                    {BODY_TYPE_DESCRIPTION[type]}
+                  </span>
                 </button>
               ))}
             </div>
