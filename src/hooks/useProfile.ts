@@ -47,6 +47,7 @@ export type Profile = {
   sex: Sex | null;
   bodyType: BodyType | null;
   allergies: string | null;
+  weeklyWorkoutGoal: number | null;
   hasCompletedOnboarding: boolean;
   notifyWorkoutReminder: boolean;
   notifyDietReminder: boolean;
@@ -68,6 +69,7 @@ type ProfileRow = {
   sex: string | null;
   body_type: string | null;
   allergies: string | null;
+  weekly_workout_goal: number | null;
   has_completed_onboarding: boolean;
   notify_workout_reminder: boolean;
   notify_diet_reminder: boolean;
@@ -90,6 +92,7 @@ function mapProfile(row: ProfileRow): Profile {
     sex: (row.sex as Sex | null) ?? null,
     bodyType: (row.body_type as BodyType | null) ?? null,
     allergies: row.allergies,
+    weeklyWorkoutGoal: row.weekly_workout_goal,
     hasCompletedOnboarding: row.has_completed_onboarding,
     notifyWorkoutReminder: row.notify_workout_reminder,
     notifyDietReminder: row.notify_diet_reminder,
@@ -182,6 +185,7 @@ export const useSaveBodyProfile = () => {
       sex: Sex | null;
       bodyType: BodyType | null;
       allergies: string | null;
+      weeklyWorkoutGoal: number | null;
     }): Promise<void> => {
       const supabase = createClient();
       const {
@@ -198,6 +202,7 @@ export const useSaveBodyProfile = () => {
           sex: input.sex,
           body_type: input.bodyType,
           allergies: input.allergies,
+          weekly_workout_goal: input.weeklyWorkoutGoal,
           has_completed_onboarding: true,
         })
         .eq("id", user.id);

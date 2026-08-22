@@ -89,10 +89,65 @@ export async function GET(request: Request) {
   const { data: profiles, error: profilesError } = await admin
     .from("profiles")
     .select(
-      "id,last_active_date,notify_workout_reminder,notify_diet_reminder",
+      "id,last_active_date,notify_workout_reminder,notify_diet_reminder,weekly_workout_goal,current_streak",
     );
   if (profilesError) {
     return NextResponse.json({ error: profilesError.message }, { status: 500 });
+  }
+
+  // Solo los lunes: revisa si cada usuario con meta semanal cumplió su
+  // cantidad de entrenamientos la semana pasada (lunes a domingo anterior).
+  // Si no la cumplió, se reinicia su racha y se le avisa. Entrenar menos
+  // días de los planeados dentro de la semana (ej. descansar el día 6 de 7)
+  // nunca rompe la racha por sí solo — solo terminar la semana sin llegar
+  // a la meta la rompe, y eso se revisa aquí una vez por semana.
+  let streaksLost = 0;
+  if (todayDow === 1) {
+    const lastWeekStartIso = toDateOnly(new Date(now.getTime() - 7 * 86_400_000));
+    const lastWeekEndExclusiveIso = today;
+
+    const { data: completions } = await admin
+      .from("workout_completions")
+      .select("user_id,completed_at")
+      .gte("completed_at", `${lastWeekStartIso}T00:00:00Z`)
+      .lt("completed_at", `${lastWeekEndExclusiveIso}T00:00:00Z`);
+
+    const daysTrainedByUser = new Map<string, Set<string>>();
+    for (const row of completions ?? []) {
+      const day = toDateOnly(new Date(row.completed_at));
+      const set = daysTrainedByUser.get(row.user_id) ?? new Set<string>();
+      set.add(day);
+      daysTrainedByUser.set(row.user_id, set);
+    }
+
+    for (const profile of profiles ?? []) {
+      if (!profile.weekly_workout_goal || profile.current_streak <= 0) continue;
+      const daysTrained = daysTrainedByUser.get(profile.id)?.size ?? 0;
+      if (daysTrained >= profile.weekly_workout_goal) continue;
+
+      const { error: resetError } = await admin
+        .from("profiles")
+        .update({ current_streak: 0 })
+        .eq("id", profile.id);
+      if (resetError) continue;
+
+      const title = "Perdiste tu racha 💔";
+      const body = `La semana pasada entrenaste ${daysTrained} de ${profile.weekly_workout_goal} días que te propusiste. ¡Empieza una nueva racha hoy!`;
+      await admin.from("user_notifications").insert({
+        user_id: profile.id,
+        type: "streak_lost",
+        title,
+        body,
+        link: "/entrenamientos",
+      });
+      await sendPushToUser(admin, profile.id, {
+        title,
+        body,
+        url: "/entrenamientos",
+        tag: "streak_lost",
+      });
+      streaksLost += 1;
+    }
   }
 
   // Plan semanal de hoy para todos los usuarios de una sola vez, y los
@@ -233,5 +288,5 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, workoutReminders, dietReminders });
+  return NextResponse.json({ ok: true, workoutReminders, dietReminders, streaksLost });
 }

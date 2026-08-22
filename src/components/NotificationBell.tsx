@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Dumbbell, UtensilsCrossed, Flame, Trophy } from "lucide-react";
+import { Bell, Dumbbell, UtensilsCrossed, Flame, HeartCrack, Trophy } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +23,7 @@ const ICONS: Record<NotificationType, React.ComponentType<{ size?: number }>> = 
   workout_reminder: Dumbbell,
   diet_reminder: UtensilsCrossed,
   streak_risk: Flame,
+  streak_lost: HeartCrack,
   achievement: Trophy,
 };
 

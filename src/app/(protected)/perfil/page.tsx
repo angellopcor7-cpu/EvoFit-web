@@ -15,6 +15,7 @@ import {
   RotateCcw,
   Bell,
   BellOff,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -29,10 +30,19 @@ import {
   DialogDescription,
 } from "@/components/ui/Dialog";
 import {
+  BodyDataForm,
+  emptyBodyDataFormValue,
+  type BodyDataFormValue,
+} from "@/components/BodyDataForm";
+import {
   useAuthSession,
   useUpdateProfile,
   useUploadAvatar,
   useUpdateNotificationPreferences,
+  useSaveBodyProfile,
+  BODY_TYPE_LABEL,
+  SEX_LABEL,
+  type Profile,
 } from "@/hooks/useProfile";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useSendTestNotification } from "@/hooks/useNotifications";
@@ -47,6 +57,19 @@ import {
 } from "@/lib/progressPhotos";
 import styles from "./page.module.css";
 
+function toBodyDataFormValue(profile: Profile | null | undefined): BodyDataFormValue {
+  if (!profile) return emptyBodyDataFormValue();
+  return {
+    weightKg: profile.weightKg !== null ? String(profile.weightKg) : "",
+    heightCm: profile.heightCm !== null ? String(profile.heightCm) : "",
+    age: profile.age !== null ? String(profile.age) : "",
+    sex: profile.sex,
+    weeklyWorkoutGoal: profile.weeklyWorkoutGoal,
+    bodyType: profile.bodyType,
+    allergies: profile.allergies ?? "",
+  };
+}
+
 export default function PerfilPage() {
   const router = useRouter();
   const { data } = useAuthSession();
@@ -54,6 +77,7 @@ export default function PerfilPage() {
   const updateProfile = useUpdateProfile();
   const uploadAvatar = useUploadAvatar();
   const resetProgress = useResetProgress();
+  const saveBodyProfile = useSaveBodyProfile();
   const updateNotificationPrefs = useUpdateNotificationPreferences();
   const push = usePushNotifications();
   const sendTestNotification = useSendTestNotification();
@@ -74,10 +98,43 @@ export default function PerfilPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [editName, setEditName] = useState("");
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [bodyDataEditing, setBodyDataEditing] = useState(false);
+  const [bodyData, setBodyData] = useState<BodyDataFormValue>(emptyBodyDataFormValue());
 
   const openEdit = () => {
     setEditName(profile?.displayName ?? "");
+    setBodyData(toBodyDataFormValue(profile));
+    setBodyDataEditing(false);
     setEditOpen(true);
+  };
+
+  const parseNumber = (value: string): number | null => {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const parsed = Number(trimmed);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+
+  const handleSaveBodyData = () => {
+    saveBodyProfile.mutate(
+      {
+        weightKg: parseNumber(bodyData.weightKg),
+        heightCm: parseNumber(bodyData.heightCm),
+        age: parseNumber(bodyData.age),
+        sex: bodyData.sex,
+        bodyType: bodyData.bodyType,
+        allergies: bodyData.allergies.trim() || null,
+        weeklyWorkoutGoal: bodyData.weeklyWorkoutGoal,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Datos guardados");
+          setBodyDataEditing(false);
+        },
+        onError: (error) =>
+          toast.error(error instanceof Error ? error.message : "No se pudo guardar"),
+      },
+    );
   };
 
   const handleSaveProfile = () => {
@@ -497,6 +554,91 @@ export default function PerfilPage() {
             >
               {updateProfile.isPending ? "Guardando..." : "Guardar"}
             </Button>
+
+            <div className={styles.notificationsSection}>
+              <h3 className={styles.notificationsTitle}>Datos corporales</h3>
+
+              {bodyDataEditing ? (
+                <>
+                  <BodyDataForm
+                    value={bodyData}
+                    onChange={(patch) => setBodyData((prev) => ({ ...prev, ...patch }))}
+                  />
+                  <Button
+                    type="button"
+                    className={styles.saveProfileButton}
+                    onClick={handleSaveBodyData}
+                    disabled={saveBodyProfile.isPending}
+                  >
+                    {saveBodyProfile.isPending ? "Guardando..." : "Guardar datos"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setBodyDataEditing(false)}
+                    disabled={saveBodyProfile.isPending}
+                  >
+                    Cancelar
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <div className={styles.bodyDataList}>
+                    <div className={styles.bodyDataRow}>
+                      <span className={styles.notificationRowLabel}>Edad</span>
+                      <span className={styles.notificationRowHint}>
+                        {profile?.age ?? "Sin datos"}
+                      </span>
+                    </div>
+                    <div className={styles.bodyDataRow}>
+                      <span className={styles.notificationRowLabel}>Peso</span>
+                      <span className={styles.notificationRowHint}>
+                        {profile?.weightKg ? `${profile.weightKg} kg` : "Sin datos"}
+                      </span>
+                    </div>
+                    <div className={styles.bodyDataRow}>
+                      <span className={styles.notificationRowLabel}>Estatura</span>
+                      <span className={styles.notificationRowHint}>
+                        {profile?.heightCm ? `${profile.heightCm} cm` : "Sin datos"}
+                      </span>
+                    </div>
+                    <div className={styles.bodyDataRow}>
+                      <span className={styles.notificationRowLabel}>Sexo</span>
+                      <span className={styles.notificationRowHint}>
+                        {profile?.sex ? SEX_LABEL[profile.sex] : "Sin datos"}
+                      </span>
+                    </div>
+                    <div className={styles.bodyDataRow}>
+                      <span className={styles.notificationRowLabel}>Tipo de cuerpo</span>
+                      <span className={styles.notificationRowHint}>
+                        {profile?.bodyType ? BODY_TYPE_LABEL[profile.bodyType] : "Sin datos"}
+                      </span>
+                    </div>
+                    <div className={styles.bodyDataRow}>
+                      <span className={styles.notificationRowLabel}>Días/semana</span>
+                      <span className={styles.notificationRowHint}>
+                        {profile?.weeklyWorkoutGoal ?? "Sin datos"}
+                      </span>
+                    </div>
+                    <div className={styles.bodyDataRow}>
+                      <span className={styles.notificationRowLabel}>Alergias</span>
+                      <span className={styles.notificationRowHint}>
+                        {profile?.allergies || "Sin datos"}
+                      </span>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setBodyDataEditing(true)}
+                  >
+                    <Pencil size={14} /> Cambiar datos
+                  </Button>
+                </>
+              )}
+            </div>
 
             <div className={styles.notificationsSection}>
               <h3 className={styles.notificationsTitle}>Notificaciones</h3>

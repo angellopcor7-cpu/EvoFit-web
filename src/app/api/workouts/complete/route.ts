@@ -41,7 +41,7 @@ export async function POST(request: Request) {
 
     const { data: profileRow, error: profileError } = await supabase
       .from("profiles")
-      .select("current_streak,longest_streak,last_active_date")
+      .select("current_streak,longest_streak,last_active_date,weekly_workout_goal")
       .eq("id", user.id)
       .maybeSingle();
     if (profileError) throw new Error(profileError.message);
@@ -53,12 +53,18 @@ export async function POST(request: Request) {
     const previousStreak = profileRow?.current_streak ?? 0;
     const previousLongest = profileRow?.longest_streak ?? 0;
     const lastActiveDate = profileRow?.last_active_date ?? null;
+    const weeklyWorkoutGoal = profileRow?.weekly_workout_goal ?? null;
 
     let currentStreak: number;
     const alreadyLoggedToday = lastActiveDate === today;
 
     if (alreadyLoggedToday) {
       currentStreak = previousStreak;
+    } else if (weeklyWorkoutGoal !== null) {
+      // Con meta semanal activa, la racha no depende de entrenar todos los
+      // días seguidos — solo se reinicia si no se cumple la meta de la
+      // semana (revisado por el cron de los lunes). Aquí simplemente suma.
+      currentStreak = previousStreak + 1;
     } else if (lastActiveDate === yesterday) {
       currentStreak = previousStreak + 1;
     } else {

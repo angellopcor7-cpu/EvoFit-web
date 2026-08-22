@@ -11,17 +11,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "./ui/Dialog";
-import {
-  useAuthSession,
-  useSaveBodyProfile,
-  BODY_TYPES,
-  BODY_TYPE_LABEL,
-  BODY_TYPE_DESCRIPTION,
-  SEX_OPTIONS,
-  SEX_LABEL,
-  type BodyType,
-  type Sex,
-} from "@/hooks/useProfile";
+import { BodyDataForm, emptyBodyDataFormValue } from "./BodyDataForm";
+import { useAuthSession, useSaveBodyProfile } from "@/hooks/useProfile";
 import { useCreateGoal } from "@/hooks/useGoals";
 import {
   GOAL_TYPE_META,
@@ -34,7 +25,9 @@ import styles from "./OnboardingDialog.module.css";
 const GOAL_TYPES: GoalType[] = ["peso", "distancia", "repeticiones", "personalizada"];
 
 // Onboarding en dos pasos, después del mensaje de bienvenida:
-// 1) datos básicos del cuerpo (peso/estatura/edad/sexo/tipo de cuerpo/alergias)
+// 1) datos básicos del cuerpo (peso/estatura/edad/sexo/meta semanal/tipo de
+//    cuerpo/alergias) — mismo formulario compartido (BodyDataForm) que
+//    "Editar perfil" usa después para poder cambiarlos.
 // 2) su primera meta, con tiempo límite — se crea directo en `user_goals`
 //    para que aparezca de inmediato en la pestaña Metas.
 // Se muestra una sola vez — profiles.has_completed_onboarding pasa a true
@@ -48,12 +41,7 @@ export const OnboardingDialog = () => {
   const [dismissed, setDismissed] = useState(false);
   const [step, setStep] = useState<"datos" | "meta">("datos");
 
-  const [weightKg, setWeightKg] = useState("");
-  const [heightCm, setHeightCm] = useState("");
-  const [age, setAge] = useState("");
-  const [sex, setSex] = useState<Sex | null>(null);
-  const [bodyType, setBodyType] = useState<BodyType | null>(null);
-  const [allergies, setAllergies] = useState("");
+  const [bodyData, setBodyData] = useState(emptyBodyDataFormValue());
 
   const [goalTitle, setGoalTitle] = useState("");
   const [goalType, setGoalType] = useState<GoalType>("peso");
@@ -77,12 +65,13 @@ export const OnboardingDialog = () => {
   const handleSave = () => {
     saveBodyProfile.mutate(
       {
-        weightKg: parseNumber(weightKg),
-        heightCm: parseNumber(heightCm),
-        age: parseNumber(age),
-        sex,
-        bodyType,
-        allergies: allergies.trim() || null,
+        weightKg: parseNumber(bodyData.weightKg),
+        heightCm: parseNumber(bodyData.heightCm),
+        age: parseNumber(bodyData.age),
+        sex: bodyData.sex,
+        bodyType: bodyData.bodyType,
+        allergies: bodyData.allergies.trim() || null,
+        weeklyWorkoutGoal: bodyData.weeklyWorkoutGoal,
       },
       {
         onSuccess: () => {
@@ -159,91 +148,10 @@ export const OnboardingDialog = () => {
             </DialogHeader>
 
             <div className={styles.form}>
-              <div className={styles.dataGrid}>
-                <div className={styles.fieldRow}>
-                  <span className={styles.fieldLabel}>Peso (kg)</span>
-                  <Input
-                    type="number"
-                    inputMode="decimal"
-                    placeholder="70"
-                    value={weightKg}
-                    onChange={(e) => setWeightKg(e.target.value)}
-                  />
-                </div>
-                <div className={styles.fieldRow}>
-                  <span className={styles.fieldLabel}>Estatura (cm)</span>
-                  <Input
-                    type="number"
-                    inputMode="decimal"
-                    placeholder="170"
-                    value={heightCm}
-                    onChange={(e) => setHeightCm(e.target.value)}
-                  />
-                </div>
-                <div className={styles.fieldRow}>
-                  <span className={styles.fieldLabel}>Edad</span>
-                  <Input
-                    type="number"
-                    inputMode="numeric"
-                    placeholder="28"
-                    value={age}
-                    onChange={(e) => setAge(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className={styles.fieldRow}>
-                <span className={styles.fieldLabel}>Sexo</span>
-                <div className={styles.chipRow}>
-                  {SEX_OPTIONS.map((option) => (
-                    <button
-                      key={option}
-                      type="button"
-                      className={`${styles.chip} ${sex === option ? styles.chipActive : ""}`}
-                      onClick={() => setSex(option)}
-                    >
-                      {SEX_LABEL[option]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className={styles.fieldRow}>
-                <span className={styles.fieldLabel}>Tipo de cuerpo</span>
-                <p className={styles.fieldHint}>
-                  Si no sabes cuál eres, lee las descripciones y elige la que
-                  más se parezca a ti — no tiene que ser exacto.
-                </p>
-                <div className={styles.bodyTypeList}>
-                  {BODY_TYPES.map((type) => (
-                    <button
-                      key={type}
-                      type="button"
-                      className={`${styles.bodyTypeOption} ${
-                        bodyType === type ? styles.bodyTypeOptionActive : ""
-                      }`}
-                      onClick={() => setBodyType(type)}
-                    >
-                      <span className={styles.bodyTypeName}>
-                        {BODY_TYPE_LABEL[type]}
-                      </span>
-                      <span className={styles.bodyTypeDescription}>
-                        {BODY_TYPE_DESCRIPTION[type]}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className={styles.fieldRow}>
-                <span className={styles.fieldLabel}>Alergias (opcional)</span>
-                <Input
-                  placeholder="Ej. maní, mariscos, lactosa"
-                  value={allergies}
-                  onChange={(e) => setAllergies(e.target.value)}
-                  maxLength={200}
-                />
-              </div>
+              <BodyDataForm
+                value={bodyData}
+                onChange={(patch) => setBodyData((prev) => ({ ...prev, ...patch }))}
+              />
 
               <Button
                 type="button"

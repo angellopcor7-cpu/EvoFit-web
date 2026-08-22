@@ -1,0 +1,102 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.dataGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-3);
+}
+
+.fieldRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.fieldLabel {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.fieldHint {
+  margin: -2px 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+}
+
+.chip {
+  padding: var(--spacing-2) var(--spacing-3);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  color: var(--muted-foreground);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color var(--animation-duration-fast) ease,
+    color var(--animation-duration-fast) ease;
+}
+
+.chipActive {
+  background: color-mix(in srgb, var(--primary) 16%, var(--card));
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.bodyTypeList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.bodyTypeOption {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--spacing-3);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--animation-duration-fast) ease,
+    background-color var(--animation-duration-fast) ease;
+}
+
+.bodyTypeOptionActive {
+  background: color-mix(in srgb, var(--primary) 12%, var(--card));
+  border-color: var(--primary);
+}
+
+.bodyTypeName {
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.bodyTypeOptionActive .bodyTypeName {
+  color: var(--primary);
+}
+
+.bodyTypeDescription {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--muted-foreground);
+}

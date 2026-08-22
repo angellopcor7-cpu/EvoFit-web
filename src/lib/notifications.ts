@@ -2,6 +2,7 @@ export const NOTIFICATION_TYPES = [
   "workout_reminder",
   "diet_reminder",
   "streak_risk",
+  "streak_lost",
   "achievement",
 ] as const;
 
