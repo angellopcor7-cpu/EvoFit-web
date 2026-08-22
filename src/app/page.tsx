@@ -113,11 +113,8 @@ export default function AuthPage() {
 
       <div className={styles.card}>
         <div className={styles.brand}>
-          <div className={styles.logoBadge}>EF</div>
-          <div className={styles.wordmark}>
-            <span className={styles.brandEvo}>EVO</span>
-            <span className={styles.brandFit}>FIT</span>
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="EvoFit" className={styles.logoImg} />
         </div>
         <p className={styles.tagline}>Entrena. Progresa. No falles.</p>
 

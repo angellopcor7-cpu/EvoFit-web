@@ -60,38 +60,13 @@
 .brand {
   display: flex;
   align-items: center;
-  gap: var(--spacing-3);
-}
-
-.logoBadge {
-  display: flex;
-  align-items: center;
   justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--primary), #ff525a);
-  color: var(--primary-foreground);
-  font-family: var(--font-family-display);
-  font-weight: 700;
-  font-size: 1.1rem;
-  letter-spacing: -0.02em;
-  box-shadow: 0 8px 24px rgba(228, 39, 46, 0.35);
 }
 
-.wordmark {
-  font-family: var(--font-family-display);
-  font-weight: 700;
-  font-size: 1.5rem;
-  letter-spacing: -0.01em;
-}
-
-.brandEvo {
-  color: var(--foreground);
-}
-
-.brandFit {
-  color: var(--primary);
+.logoImg {
+  height: 6.5rem;
+  width: auto;
+  filter: drop-shadow(0 8px 24px rgba(228, 39, 46, 0.35));
 }
 
 .tagline {

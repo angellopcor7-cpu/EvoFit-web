@@ -12,11 +12,8 @@ export const TopBar = () => {
   return (
     <header className={styles.topBar}>
       <div className={styles.brand}>
-        <div className={styles.logoBadge}>EF</div>
-        <span className={styles.wordmark}>
-          <span className={styles.brandEvo}>EVO</span>
-          <span className={styles.brandFit}>FIT</span>
-        </span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo.png" alt="EvoFit" className={styles.logoImg} />
       </div>
       <div className={styles.rightSection}>
         <div className={styles.streakPill}>
