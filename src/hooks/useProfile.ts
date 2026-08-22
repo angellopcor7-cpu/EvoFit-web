@@ -26,6 +26,8 @@ export type Profile = {
   bodyType: BodyType | null;
   allergies: string | null;
   hasCompletedOnboarding: boolean;
+  notifyWorkoutReminder: boolean;
+  notifyDietReminder: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -44,6 +46,8 @@ type ProfileRow = {
   body_type: string | null;
   allergies: string | null;
   has_completed_onboarding: boolean;
+  notify_workout_reminder: boolean;
+  notify_diet_reminder: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -63,6 +67,8 @@ function mapProfile(row: ProfileRow): Profile {
     bodyType: (row.body_type as BodyType | null) ?? null,
     allergies: row.allergies,
     hasCompletedOnboarding: row.has_completed_onboarding,
+    notifyWorkoutReminder: row.notify_workout_reminder,
+    notifyDietReminder: row.notify_diet_reminder,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -209,6 +215,39 @@ export const useUploadAvatar = () => {
         .update({ avatar_url: avatarUrl })
         .eq("id", user.id);
       if (updateError) throw new Error(updateError.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["auth", "session"] });
+    },
+  });
+};
+
+export const useUpdateNotificationPreferences = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      notifyWorkoutReminder?: boolean;
+      notifyDietReminder?: boolean;
+    }): Promise<void> => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("No autenticado");
+
+      const update: Record<string, boolean> = {};
+      if (input.notifyWorkoutReminder !== undefined) {
+        update.notify_workout_reminder = input.notifyWorkoutReminder;
+      }
+      if (input.notifyDietReminder !== undefined) {
+        update.notify_diet_reminder = input.notifyDietReminder;
+      }
+
+      const { error } = await supabase
+        .from("profiles")
+        .update(update)
+        .eq("id", user.id);
+      if (error) throw new Error(error.message);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["auth", "session"] });

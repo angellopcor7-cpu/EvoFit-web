@@ -47,6 +47,12 @@
   color: var(--primary);
 }
 
+.rightSection {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
 .streakPill {
   display: flex;
   align-items: center;

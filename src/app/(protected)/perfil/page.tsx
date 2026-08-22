@@ -13,11 +13,14 @@ import {
   Loader2,
   AlertTriangle,
   RotateCcw,
+  Bell,
+  BellOff,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Switch } from "@/components/ui/Switch";
 import {
   Dialog,
   DialogContent,
@@ -25,7 +28,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/Dialog";
-import { useAuthSession, useUpdateProfile, useUploadAvatar } from "@/hooks/useProfile";
+import {
+  useAuthSession,
+  useUpdateProfile,
+  useUploadAvatar,
+  useUpdateNotificationPreferences,
+} from "@/hooks/useProfile";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useLogout } from "@/hooks/useAuthActions";
 import { useResetProgress } from "@/hooks/useResetProgress";
 import { useWorkoutStats } from "@/hooks/useWorkoutCompletions";
@@ -44,6 +53,8 @@ export default function PerfilPage() {
   const updateProfile = useUpdateProfile();
   const uploadAvatar = useUploadAvatar();
   const resetProgress = useResetProgress();
+  const updateNotificationPrefs = useUpdateNotificationPreferences();
+  const push = usePushNotifications();
   const { data: stats } = useWorkoutStats();
   const { data: photosData } = useProgressPhotos();
   const uploadPhoto = useUploadProgressPhoto();
@@ -125,6 +136,34 @@ export default function PerfilPage() {
           error instanceof Error ? error.message : "No se pudo reiniciar tu progreso",
         ),
     });
+  };
+
+  const handleTogglePush = async () => {
+    if (push.subscribed) {
+      await push.disable();
+      toast.success("Notificaciones push desactivadas");
+    } else {
+      await push.enable();
+      if (push.error) {
+        toast.error(push.error);
+      } else {
+        toast.success("Notificaciones push activadas");
+      }
+    }
+  };
+
+  const handleToggleWorkoutReminder = (checked: boolean) => {
+    updateNotificationPrefs.mutate(
+      { notifyWorkoutReminder: checked },
+      { onError: () => toast.error("No se pudo guardar la preferencia") },
+    );
+  };
+
+  const handleToggleDietReminder = (checked: boolean) => {
+    updateNotificationPrefs.mutate(
+      { notifyDietReminder: checked },
+      { onError: () => toast.error("No se pudo guardar la preferencia") },
+    );
   };
 
   const slots = buildMilestoneSlots(photosData?.photos ?? []);
@@ -440,6 +479,65 @@ export default function PerfilPage() {
             >
               {updateProfile.isPending ? "Guardando..." : "Guardar"}
             </Button>
+
+            <div className={styles.notificationsSection}>
+              <h3 className={styles.notificationsTitle}>Notificaciones</h3>
+
+              <div className={styles.notificationRow}>
+                <div className={styles.notificationRowText}>
+                  <span className={styles.notificationRowLabel}>
+                    Notificaciones push
+                  </span>
+                  <span className={styles.notificationRowHint}>
+                    {push.supported
+                      ? "Avisos aunque no tengas EvoFit abierto"
+                      : "Tu navegador no las soporta"}
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleTogglePush}
+                  disabled={!push.supported || push.loading}
+                >
+                  {push.subscribed ? <BellOff size={14} /> : <Bell size={14} />}
+                  {push.subscribed ? "Desactivar" : "Activar"}
+                </Button>
+              </div>
+
+              <div className={styles.notificationRow}>
+                <div className={styles.notificationRowText}>
+                  <span className={styles.notificationRowLabel}>
+                    Recordatorio de entreno
+                  </span>
+                  <span className={styles.notificationRowHint}>
+                    Si no entrenaste en el día
+                  </span>
+                </div>
+                <Switch
+                  checked={profile?.notifyWorkoutReminder ?? true}
+                  onCheckedChange={handleToggleWorkoutReminder}
+                  disabled={updateNotificationPrefs.isPending}
+                />
+              </div>
+
+              <div className={styles.notificationRow}>
+                <div className={styles.notificationRowText}>
+                  <span className={styles.notificationRowLabel}>
+                    Recordatorio de dieta
+                  </span>
+                  <span className={styles.notificationRowHint}>
+                    Aviso diario de tu plan de comidas
+                  </span>
+                </div>
+                <Switch
+                  checked={profile?.notifyDietReminder ?? true}
+                  onCheckedChange={handleToggleDietReminder}
+                  disabled={updateNotificationPrefs.isPending}
+                />
+              </div>
+            </div>
 
             <div className={styles.dangerZone}>
               <Button

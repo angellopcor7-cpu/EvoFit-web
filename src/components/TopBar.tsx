@@ -2,6 +2,7 @@
 
 import { Flame } from "lucide-react";
 import { useAuthSession } from "@/hooks/useProfile";
+import { NotificationBell } from "./NotificationBell";
 import styles from "./TopBar.module.css";
 
 export const TopBar = () => {
@@ -17,9 +18,12 @@ export const TopBar = () => {
           <span className={styles.brandFit}>FIT</span>
         </span>
       </div>
-      <div className={styles.streakPill}>
-        <Flame size={14} />
-        <span>{streak}</span>
+      <div className={styles.rightSection}>
+        <div className={styles.streakPill}>
+          <Flame size={14} />
+          <span>{streak}</span>
+        </div>
+        <NotificationBell />
       </div>
     </header>
   );
