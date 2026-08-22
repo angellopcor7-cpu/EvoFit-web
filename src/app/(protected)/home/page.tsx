@@ -19,63 +19,16 @@ import { useWeeklyPlan } from "@/hooks/useWeeklyPlan";
 import { useWorkoutRoutines } from "@/hooks/useWorkoutRoutines";
 import { useUserRoutines } from "@/hooks/useUserRoutines";
 import { DIET_GOAL_LABEL } from "@/lib/diet";
-import { formatPlannedTime, type WeeklyPlanEntry } from "@/lib/weeklyPlan";
 import {
-  isSessionCategory,
-  toEntrenamientosUiCategory,
-  WORKOUT_CATEGORY_LABEL,
-  type WorkoutRoutine,
-} from "@/lib/workouts";
-import { MUSCLE_GROUP_LABEL } from "@/lib/exercises";
-import type { UserRoutine } from "@/lib/userRoutines";
+  computeDayRoutinePlan,
+  DAY_ORDER,
+  DAY_OF_WEEK_SHORT,
+} from "@/lib/weeklyPlan";
 import { pickMotivationalQuote } from "@/lib/motivation";
 import styles from "./page.module.css";
 
 function todayStr(): string {
   return new Date().toISOString().slice(0, 10);
-}
-
-type TodayPlan = {
-  title: string;
-  focusLabel: string;
-  plannedTime: string | null;
-  href: string;
-};
-
-function computeTodayPlan(
-  entry: WeeklyPlanEntry | undefined,
-  allRoutines: WorkoutRoutine[],
-  myRoutines: UserRoutine[],
-): TodayPlan | null {
-  if (!entry) return null;
-
-  if (entry.userRoutineId) {
-    const routine = myRoutines.find((r) => r.id === entry.userRoutineId);
-    if (!routine) return null;
-    const groups = Array.from(new Set(routine.exercises.map((e) => e.muscleGroup)));
-    return {
-      title: routine.title,
-      focusLabel:
-        groups.map((g) => MUSCLE_GROUP_LABEL[g]).join(", ") || "Tu rutina",
-      plannedTime: formatPlannedTime(entry.plannedTime) || null,
-      href: `/entrenamientos?routine=${routine.id}&type=propia`,
-    };
-  }
-
-  const routine = allRoutines.find((r) => r.id === entry.workoutRoutineId);
-  if (!routine) return null;
-  const focusLabel = isSessionCategory(routine.category)
-    ? WORKOUT_CATEGORY_LABEL[routine.category]
-    : Array.from(new Set(routine.exercises.map((e) => e.muscleGroup)))
-        .map((g) => MUSCLE_GROUP_LABEL[g])
-        .join(", ");
-
-  return {
-    title: routine.title,
-    focusLabel,
-    plannedTime: formatPlannedTime(entry.plannedTime) || null,
-    href: `/entrenamientos?category=${toEntrenamientosUiCategory(routine.category)}&routine=${routine.id}&type=predef`,
-  };
 }
 
 export default function HomePage() {
@@ -90,14 +43,23 @@ export default function HomePage() {
 
   const trainedToday = profile?.lastActiveDate === todayStr();
 
+  const allRoutines = routinesData?.routines ?? [];
+  const myRoutines = userRoutinesData?.routines ?? [];
+
   const planEntries = planData?.entries ?? [];
   const hasAnyPlan = planEntries.length > 0;
-  const todayEntry = planEntries.find((e) => e.dayOfWeek === new Date().getDay());
-  const todayPlan = computeTodayPlan(
-    todayEntry,
-    routinesData?.routines ?? [],
-    userRoutinesData?.routines ?? [],
-  );
+  const todayDow = new Date().getDay();
+  const todayEntry = planEntries.find((e) => e.dayOfWeek === todayDow);
+  const todayPlan = computeDayRoutinePlan(todayEntry, allRoutines, myRoutines);
+
+  const weekRows = DAY_ORDER.map((dayOfWeek) => {
+    const entry = planEntries.find((e) => e.dayOfWeek === dayOfWeek);
+    return {
+      dayOfWeek,
+      isToday: dayOfWeek === todayDow,
+      plan: computeDayRoutinePlan(entry, allRoutines, myRoutines),
+    };
+  });
 
   const daysSinceLastActive = profile?.lastActiveDate
     ? Math.floor(
@@ -186,6 +148,44 @@ export default function HomePage() {
           </Button>
         )}
       </div>
+
+      {hasAnyPlan && (
+        <div className={styles.weekList}>
+          {weekRows.map(({ dayOfWeek, isToday, plan }) => {
+            const rowClassName = `${styles.weekRow} ${
+              isToday ? styles.weekRowToday : styles.weekRowDimmed
+            }`;
+            const rowContent = (
+              <>
+                <span className={styles.weekDay}>
+                  {DAY_OF_WEEK_SHORT[dayOfWeek]}
+                  {isToday && <span className={styles.weekTodayBadge}>Hoy</span>}
+                </span>
+                {plan ? (
+                  <span className={styles.weekInfo}>
+                    <span className={styles.weekFocus}>{plan.focusLabel}</span>
+                    <span className={styles.weekTitle}>
+                      {plan.title}
+                      {plan.plannedTime ? ` · ${plan.plannedTime}` : ""}
+                    </span>
+                  </span>
+                ) : (
+                  <span className={styles.weekRest}>Descanso</span>
+                )}
+              </>
+            );
+            return plan ? (
+              <Link key={dayOfWeek} href={plan.href} className={rowClassName}>
+                {rowContent}
+              </Link>
+            ) : (
+              <div key={dayOfWeek} className={rowClassName}>
+                {rowContent}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <Link href="/plan" className={styles.planLink}>
         <CalendarDays size={14} />

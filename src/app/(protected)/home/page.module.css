@@ -141,6 +141,93 @@
   line-height: 1.4;
 }
 
+.weekList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.weekRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3) var(--spacing-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid transparent;
+  text-decoration: none;
+  transition: opacity var(--animation-duration-fast) ease;
+}
+
+.weekRowDimmed {
+  background: var(--surface);
+  border-color: var(--border);
+  opacity: 0.5;
+  filter: saturate(0.6);
+}
+
+.weekRowToday {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--primary) 20%, var(--card)),
+    color-mix(in srgb, var(--secondary) 12%, var(--card))
+  );
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--primary) 16%, transparent);
+}
+
+.weekDay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  width: 2.5rem;
+  font-family: var(--font-family-display);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--foreground);
+  text-transform: uppercase;
+}
+
+.weekTodayBadge {
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background: var(--primary);
+  color: var(--primary-foreground, #fff);
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.weekInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.weekFocus {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.weekTitle {
+  font-size: 0.76rem;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.weekRest {
+  font-size: 0.82rem;
+  color: var(--muted-foreground);
+}
+
 .planLink {
   display: flex;
   align-items: center;

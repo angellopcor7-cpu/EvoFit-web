@@ -94,6 +94,45 @@
   color: var(--primary);
 }
 
+.routinePickerButton {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  height: 2.5rem;
+  padding: var(--spacing-2) var(--spacing-3);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color var(--animation-duration-fast) ease;
+}
+
+.routinePickerButton:hover {
+  border-color: color-mix(in srgb, var(--primary) 80%, transparent);
+}
+
+.routinePickerIcon {
+  flex-shrink: 0;
+  color: var(--muted-foreground);
+}
+
+.routinePickerValue {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--foreground);
+  font-size: 0.9rem;
+}
+
+.routinePickerPlaceholder {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+}
+
 .emptyHint {
   margin: 0;
   color: var(--muted-foreground);

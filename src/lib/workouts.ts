@@ -58,6 +58,13 @@ export function toEntrenamientosUiCategory(category: WorkoutCategory): string {
   return category === "cardio_hiit" ? "cardio" : category;
 }
 
+export const LEVEL_LABEL: Record<string, string> = {
+  principiante: "Principiante",
+  intermedio: "Intermedio",
+  avanzado: "Avanzado",
+  todos: "Todos los niveles",
+};
+
 export type WorkoutExercise = {
   id: string;
   orderIndex: number;

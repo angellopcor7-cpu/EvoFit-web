@@ -1,21 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Clock, Trash2 } from "lucide-react";
+import { ArrowLeft, Clock, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Switch } from "@/components/ui/Switch";
 import { Spinner } from "@/components/ui/Spinner";
 import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/Select";
+  RoutinePickerDialog,
+  type RoutinePickerItem,
+} from "@/components/RoutinePickerDialog";
 import { useWorkoutRoutines } from "@/hooks/useWorkoutRoutines";
 import { useUserRoutines } from "@/hooks/useUserRoutines";
 import {
@@ -33,11 +30,13 @@ import {
 import {
   WORKOUT_CATEGORIES,
   WORKOUT_CATEGORY_LABEL,
+  LEVEL_LABEL,
   type WorkoutCategory,
   type WorkoutRoutine,
 } from "@/lib/workouts";
-import type { UserRoutine } from "@/lib/userRoutines";
 import styles from "./page.module.css";
+
+const ALL_CATEGORIES_VALUE = "todas";
 
 type RoutineSource = "predeterminada" | "propia";
 
@@ -103,6 +102,11 @@ export default function PlanSemanalPage() {
   });
   const [initialized, setInitialized] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [picker, setPicker] = useState<{
+    dayOfWeek: number;
+    source: RoutineSource;
+  } | null>(null);
+  const [pickerCategory, setPickerCategory] = useState<string>(ALL_CATEGORIES_VALUE);
 
   useEffect(() => {
     if (initialized || !planData) return;
@@ -122,6 +126,62 @@ export default function PlanSemanalPage() {
   };
 
   const isLoading = isFetchingRoutines || isFetchingUserRoutines || isFetchingPlan;
+
+  const openPicker = (dayOfWeek: number, source: RoutineSource) => {
+    if (source === "predeterminada") {
+      setPickerCategory(days[dayOfWeek].category ?? ALL_CATEGORIES_VALUE);
+    }
+    setPicker({ dayOfWeek, source });
+  };
+
+  const pickerCategoryOptions = [
+    { value: ALL_CATEGORIES_VALUE, label: "Todas" },
+    ...WORKOUT_CATEGORIES.map((cat) => ({
+      value: cat,
+      label: WORKOUT_CATEGORY_LABEL[cat],
+    })),
+  ];
+
+  const pickerItems: RoutinePickerItem[] = useMemo(() => {
+    if (!picker) return [];
+    if (picker.source === "propia") {
+      return myRoutines.map((routine) => ({
+        id: routine.id,
+        title: routine.title,
+      }));
+    }
+    const source =
+      pickerCategory === ALL_CATEGORIES_VALUE
+        ? allRoutines
+        : allRoutines.filter((r) => r.category === pickerCategory);
+    return source.map((routine) => ({
+      id: routine.id,
+      title: routine.title,
+      subtitle: `${WORKOUT_CATEGORY_LABEL[routine.category]} · ${
+        LEVEL_LABEL[routine.level] ?? routine.level
+      }`,
+      filterValue: routine.dayLabel ?? "",
+    }));
+  }, [picker, pickerCategory, allRoutines, myRoutines]);
+
+  const pickerSelectedId = picker
+    ? picker.source === "propia"
+      ? days[picker.dayOfWeek].userRoutineId
+      : days[picker.dayOfWeek].workoutRoutineId
+    : "";
+
+  const handlePickerSelect = (id: string) => {
+    if (!picker) return;
+    if (picker.source === "propia") {
+      updateDay(picker.dayOfWeek, { userRoutineId: id });
+    } else {
+      const routine = allRoutines.find((r) => r.id === id);
+      updateDay(picker.dayOfWeek, {
+        workoutRoutineId: id,
+        category: routine?.category ?? days[picker.dayOfWeek].category,
+      });
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -196,9 +256,12 @@ export default function PlanSemanalPage() {
           <div className={styles.daysList}>
             {DAY_ORDER.map((dayOfWeek) => {
               const form = days[dayOfWeek];
-              const categoryRoutines = allRoutines.filter(
-                (r) => r.category === form.category,
-              );
+              const selectedPredefTitle = allRoutines.find(
+                (r) => r.id === form.workoutRoutineId,
+              )?.title;
+              const selectedUserTitle = myRoutines.find(
+                (r) => r.id === form.userRoutineId,
+              )?.title;
               return (
                 <div key={dayOfWeek} className={styles.dayCard}>
                   <div className={styles.dayHeader}>
@@ -235,46 +298,22 @@ export default function PlanSemanalPage() {
                       </div>
 
                       {form.source === "predeterminada" ? (
-                        <>
-                          <Select
-                            value={form.category}
-                            onValueChange={(value) =>
-                              updateDay(dayOfWeek, {
-                                category: value as WorkoutCategory,
-                                workoutRoutineId: "",
-                              })
+                        <button
+                          type="button"
+                          className={styles.routinePickerButton}
+                          onClick={() => openPicker(dayOfWeek, "predeterminada")}
+                        >
+                          <Search size={14} className={styles.routinePickerIcon} />
+                          <span
+                            className={
+                              selectedPredefTitle
+                                ? styles.routinePickerValue
+                                : styles.routinePickerPlaceholder
                             }
                           >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {WORKOUT_CATEGORIES.map((cat) => (
-                                <SelectItem key={cat} value={cat}>
-                                  {WORKOUT_CATEGORY_LABEL[cat]}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-
-                          <Select
-                            value={form.workoutRoutineId}
-                            onValueChange={(value) =>
-                              updateDay(dayOfWeek, { workoutRoutineId: value })
-                            }
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Elige una rutina" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {categoryRoutines.map((routine) => (
-                                <SelectItem key={routine.id} value={routine.id}>
-                                  {routine.title}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </>
+                            {selectedPredefTitle ?? "Buscar rutina predeterminada"}
+                          </span>
+                        </button>
                       ) : myRoutines.length === 0 ? (
                         <p className={styles.emptyHint}>
                           Todavía no tienes rutinas propias.{" "}
@@ -284,23 +323,22 @@ export default function PlanSemanalPage() {
                           .
                         </p>
                       ) : (
-                        <Select
-                          value={form.userRoutineId}
-                          onValueChange={(value) =>
-                            updateDay(dayOfWeek, { userRoutineId: value })
-                          }
+                        <button
+                          type="button"
+                          className={styles.routinePickerButton}
+                          onClick={() => openPicker(dayOfWeek, "propia")}
                         >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Elige tu rutina" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {myRoutines.map((routine: UserRoutine) => (
-                              <SelectItem key={routine.id} value={routine.id}>
-                                {routine.title}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          <Search size={14} className={styles.routinePickerIcon} />
+                          <span
+                            className={
+                              selectedUserTitle
+                                ? styles.routinePickerValue
+                                : styles.routinePickerPlaceholder
+                            }
+                          >
+                            {selectedUserTitle ?? "Buscar tu rutina"}
+                          </span>
+                        </button>
                       )}
 
                       <div className={styles.timeRow}>
@@ -341,6 +379,26 @@ export default function PlanSemanalPage() {
           </Button>
         </>
       )}
+
+      <RoutinePickerDialog
+        open={picker !== null}
+        onOpenChange={(open) => {
+          if (!open) setPicker(null);
+        }}
+        title={
+          picker?.source === "propia" ? "Elige tu rutina" : "Buscar rutina predeterminada"
+        }
+        searchPlaceholder={
+          picker?.source === "propia" ? "Buscar entre tus rutinas..." : "Buscar rutina..."
+        }
+        items={pickerItems}
+        selectedId={pickerSelectedId}
+        onSelect={handlePickerSelect}
+        categories={picker?.source === "predeterminada" ? pickerCategoryOptions : undefined}
+        activeCategory={pickerCategory}
+        onCategoryChange={setPickerCategory}
+        emptyLabel="No encontramos rutinas con ese nombre."
+      />
     </div>
   );
 }
