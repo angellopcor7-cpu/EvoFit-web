@@ -35,6 +35,7 @@ import {
   useUpdateNotificationPreferences,
 } from "@/hooks/useProfile";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useSendTestNotification } from "@/hooks/useNotifications";
 import { useLogout } from "@/hooks/useAuthActions";
 import { useResetProgress } from "@/hooks/useResetProgress";
 import { useWorkoutStats } from "@/hooks/useWorkoutCompletions";
@@ -55,6 +56,7 @@ export default function PerfilPage() {
   const resetProgress = useResetProgress();
   const updateNotificationPrefs = useUpdateNotificationPreferences();
   const push = usePushNotifications();
+  const sendTestNotification = useSendTestNotification();
   const { data: stats } = useWorkoutStats();
   const { data: photosData } = useProgressPhotos();
   const uploadPhoto = useUploadProgressPhoto();
@@ -164,6 +166,22 @@ export default function PerfilPage() {
       { notifyDietReminder: checked },
       { onError: () => toast.error("No se pudo guardar la preferencia") },
     );
+  };
+
+  const handleSendTestNotification = () => {
+    sendTestNotification.mutate(undefined, {
+      onSuccess: (result) => {
+        toast.success(
+          result.pushSent > 0
+            ? "Notificación de prueba enviada — revisa la campana y el push"
+            : "Notificación de prueba enviada — revisa la campana (el push no llegó, ¿lo activaste?)",
+        );
+      },
+      onError: (error) =>
+        toast.error(
+          error instanceof Error ? error.message : "No se pudo mandar la prueba",
+        ),
+    });
   };
 
   const slots = buildMilestoneSlots(photosData?.photos ?? []);
@@ -537,6 +555,18 @@ export default function PerfilPage() {
                   disabled={updateNotificationPrefs.isPending}
                 />
               </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleSendTestNotification}
+                disabled={sendTestNotification.isPending}
+              >
+                {sendTestNotification.isPending
+                  ? "Enviando..."
+                  : "Probar notificación"}
+              </Button>
             </div>
 
             <div className={styles.dangerZone}>

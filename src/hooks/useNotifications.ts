@@ -51,6 +51,21 @@ export const useMarkNotificationRead = () => {
   });
 };
 
+export const useSendTestNotification = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (): Promise<{ pushSent: number; hasSubscription: boolean }> => {
+      const res = await fetch("/api/push/test", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo mandar la prueba");
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+    },
+  });
+};
+
 export const useMarkAllNotificationsRead = () => {
   const queryClient = useQueryClient();
   return useMutation({
