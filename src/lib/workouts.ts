@@ -36,6 +36,28 @@ export const WORKOUT_CATEGORY_LABEL: Record<WorkoutCategory, string> = {
   hibrido: "Híbridos",
 };
 
+// Categorías de "sesión completa" (no se eligen ejercicio por ejercicio,
+// así que su muscle_group real no dice mucho — mostramos la categoría en
+// vez del grupo muscular, por ejemplo en la tarjeta "Hoy toca" de Inicio).
+export const SESSION_CATEGORIES: WorkoutCategory[] = [
+  "zumba",
+  "crossfit",
+  "yoga_pilates",
+  "boxeo_kickboxing",
+  "equipo_especial",
+  "hibrido",
+];
+
+export function isSessionCategory(category: WorkoutCategory): boolean {
+  return (SESSION_CATEGORIES as string[]).includes(category);
+}
+
+// "cardio_hiit" es el único caso donde el valor de la categoría en la base
+// de datos no coincide con la clave usada en la UI de Entrenamientos.
+export function toEntrenamientosUiCategory(category: WorkoutCategory): string {
+  return category === "cardio_hiit" ? "cardio" : category;
+}
+
 export type WorkoutExercise = {
   id: string;
   orderIndex: number;

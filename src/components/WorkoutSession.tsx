@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Progress } from "@/components/ui/Progress";
 import { Spinner } from "@/components/ui/Spinner";
 import { parseSecondsLabel, formatTimer } from "@/lib/workoutTimer";
+import { notifyLocal } from "@/lib/localNotify";
 import type { MuscleGroup } from "@/lib/exercises";
 import styles from "./WorkoutSession.module.css";
 
@@ -104,8 +105,12 @@ export function WorkoutSession({
     if (phase !== "working" && phase !== "resting") return undefined;
     const timeout = setTimeout(() => {
       if (remaining <= 1) {
-        if (phase === "working") goToRestOrAdvance();
-        else advanceSet();
+        if (phase === "working") {
+          goToRestOrAdvance();
+        } else {
+          notifyLocal("¡Descanso terminado!", "Es hora de tu siguiente serie.");
+          advanceSet();
+        }
       } else {
         setRemaining((r) => r - 1);
       }

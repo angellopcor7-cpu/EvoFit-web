@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import webpush from "web-push";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { formatPlannedTime } from "@/lib/weeklyPlan";
+import { pickMotivationalQuote } from "@/lib/motivation";
 
 // Corre una vez al día (ver vercel.json). Revisa, por cada usuario:
 // 1) si no ha entrenado hoy y tiene el recordatorio de entreno activado
@@ -79,8 +81,10 @@ export async function GET(request: Request) {
   const admin = createAdminClient();
   configureWebPush();
 
-  const today = toDateOnly(new Date());
+  const now = new Date();
+  const today = toDateOnly(now);
   const todayStartIso = `${today}T00:00:00Z`;
+  const todayDow = now.getDay();
 
   const { data: profiles, error: profilesError } = await admin
     .from("profiles")
@@ -89,6 +93,46 @@ export async function GET(request: Request) {
     );
   if (profilesError) {
     return NextResponse.json({ error: profilesError.message }, { status: 500 });
+  }
+
+  // Plan semanal de hoy para todos los usuarios de una sola vez, y los
+  // títulos de las rutinas que referencia, para poder mencionar "Hoy toca:
+  // <rutina>" en el recordatorio en vez de un mensaje genérico.
+  const { data: planRows } = await admin
+    .from("user_weekly_plan")
+    .select("user_id,workout_routine_id,user_routine_id,planned_time")
+    .eq("day_of_week", todayDow);
+
+  const planByUser = new Map<
+    string,
+    { workoutRoutineId: string | null; userRoutineId: string | null; plannedTime: string | null }
+  >();
+  const workoutRoutineIds = new Set<string>();
+  const userRoutineIds = new Set<string>();
+  for (const row of planRows ?? []) {
+    planByUser.set(row.user_id, {
+      workoutRoutineId: row.workout_routine_id,
+      userRoutineId: row.user_routine_id,
+      plannedTime: row.planned_time,
+    });
+    if (row.workout_routine_id) workoutRoutineIds.add(row.workout_routine_id);
+    if (row.user_routine_id) userRoutineIds.add(row.user_routine_id);
+  }
+
+  const routineTitleById = new Map<string, string>();
+  if (workoutRoutineIds.size > 0) {
+    const { data: routines } = await admin
+      .from("workout_routines")
+      .select("id,title")
+      .in("id", Array.from(workoutRoutineIds));
+    for (const r of routines ?? []) routineTitleById.set(r.id, r.title);
+  }
+  if (userRoutineIds.size > 0) {
+    const { data: routines } = await admin
+      .from("user_routines")
+      .select("id,title")
+      .in("id", Array.from(userRoutineIds));
+    for (const r of routines ?? []) routineTitleById.set(r.id, r.title);
   }
 
   let workoutReminders = 0;
@@ -106,8 +150,34 @@ export async function GET(request: Request) {
         todayStartIso,
       );
       if (!alreadySent) {
-        const title = "No rompas tu racha 🔥";
-        const body = "Todavía no registras un entrenamiento hoy. ¡Un rato basta!";
+        const daysSinceLastActive = profile.last_active_date
+          ? Math.floor(
+              (now.getTime() - new Date(`${profile.last_active_date}T00:00:00Z`).getTime()) /
+                86_400_000,
+            )
+          : Infinity;
+
+        let title: string;
+        let body: string;
+        if (daysSinceLastActive >= 2) {
+          title = "Te extrañamos por aquí 💪";
+          const seed = now.getDate() + (Number.isFinite(daysSinceLastActive) ? daysSinceLastActive : 0);
+          body = pickMotivationalQuote(seed);
+        } else {
+          const plan = planByUser.get(profile.id);
+          const routineTitle = plan
+            ? routineTitleById.get(plan.workoutRoutineId ?? plan.userRoutineId ?? "")
+            : undefined;
+          const plannedTime = plan ? formatPlannedTime(plan.plannedTime) : "";
+          if (routineTitle) {
+            title = "No rompas tu racha 🔥";
+            body = `Hoy toca: ${routineTitle}${plannedTime ? ` · ${plannedTime}` : ""}`;
+          } else {
+            title = "No rompas tu racha 🔥";
+            body = "Todavía no registras un entrenamiento hoy. ¡Un rato basta!";
+          }
+        }
+
         await admin.from("user_notifications").insert({
           user_id: profile.id,
           type: "workout_reminder",

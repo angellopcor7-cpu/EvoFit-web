@@ -14,6 +14,20 @@ export const MUSCLE_GROUPS = [
 
 export type MuscleGroup = (typeof MUSCLE_GROUPS)[number];
 
+export const MUSCLE_GROUP_LABEL: Record<MuscleGroup, string> = {
+  pecho: "Pecho",
+  espalda: "Espalda",
+  hombros: "Hombros",
+  biceps: "Bíceps",
+  triceps: "Tríceps",
+  cuadriceps: "Cuádriceps",
+  isquiotibiales: "Isquiotibiales",
+  gluteos: "Glúteos",
+  pantorrillas: "Pantorrillas",
+  abdomen: "Abdomen",
+  cardio: "Cardio",
+};
+
 export const EQUIPMENT_TYPES = ["gym", "peso_corporal"] as const;
 
 export type EquipmentType = (typeof EQUIPMENT_TYPES)[number];

@@ -1,0 +1,140 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  max-width: 32rem;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-family-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-12) 0;
+}
+
+.daysList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.dayCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  padding: var(--spacing-4);
+  background: var(--card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.dayHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dayLabel {
+  font-family: var(--font-family-display);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--foreground);
+}
+
+.dayBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.sourceToggle {
+  display: flex;
+  gap: var(--spacing-2);
+}
+
+.sourceButton {
+  flex: 1;
+  padding: var(--spacing-2) var(--spacing-3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sourceButtonActive {
+  background: color-mix(in srgb, var(--primary) 15%, var(--surface));
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.emptyHint {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+}
+
+.emptyHint a {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.timeRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.timeIcon {
+  color: var(--muted-foreground);
+  flex-shrink: 0;
+}
+
+.timeInput {
+  flex: 1;
+}
+
+.clearTimeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.saveButton {
+  width: 100%;
+  border-radius: var(--radius-full);
+}

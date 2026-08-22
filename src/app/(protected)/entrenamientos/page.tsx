@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -221,6 +221,7 @@ export default function EntrenamientosPage() {
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [selectedBodyType, setSelectedBodyType] = useState<string | null>(null);
+  const [autoOpenedRoutine, setAutoOpenedRoutine] = useState(false);
   const [expandedExerciseIds, setExpandedExerciseIds] = useState<Set<string>>(
     () => new Set(),
   );
@@ -322,6 +323,31 @@ export default function EntrenamientosPage() {
       userRoutineId: routine.id,
     });
   };
+
+  // Deep-link desde la tarjeta "Hoy toca" de Inicio: ?routine=<id>&type=predef|propia
+  // abre directo el detalle de esa rutina (el diálogo flota encima de la
+  // pestaña que sea, así que no importa cuál esté activa debajo).
+  useEffect(() => {
+    if (autoOpenedRoutine) return;
+    const routineId = searchParams.get("routine");
+    const type = searchParams.get("type");
+    if (!routineId || !type) return;
+
+    if (type === "propia") {
+      const routine = myRoutines.find((r) => r.id === routineId);
+      if (routine) {
+        selectUserRoutine(routine);
+        setAutoOpenedRoutine(true);
+      }
+    } else {
+      const routine = allRoutines.find((r) => r.id === routineId);
+      if (routine) {
+        selectPackRoutine(routine);
+        setAutoOpenedRoutine(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, allRoutines, myRoutines, autoOpenedRoutine]);
 
   const handleSessionComplete = () => {
     if (!selected) return;
