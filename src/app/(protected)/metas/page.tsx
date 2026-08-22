@@ -22,6 +22,8 @@ import {
 } from "@/hooks/useGoals";
 import {
   GOAL_TYPE_META,
+  GOAL_DEADLINE_PRESETS,
+  addDaysIso,
   goalProgress,
   goalDeadlineLabel,
   type Goal,
@@ -42,6 +44,8 @@ export default function MetasPage() {
   const [goalType, setGoalType] = useState<GoalType>("peso");
   const [targetValue, setTargetValue] = useState("");
   const [customUnit, setCustomUnit] = useState("");
+  const [deadlineDays, setDeadlineDays] = useState<number | null>(null);
+  const [useCustomDate, setUseCustomDate] = useState(false);
   const [targetDate, setTargetDate] = useState("");
 
   const [progressGoal, setProgressGoal] = useState<Goal | null>(null);
@@ -54,6 +58,8 @@ export default function MetasPage() {
     setGoalType("peso");
     setTargetValue("");
     setCustomUnit("");
+    setDeadlineDays(null);
+    setUseCustomDate(false);
     setTargetDate("");
   };
 
@@ -67,14 +73,23 @@ export default function MetasPage() {
       toast.error("Ingresa un valor objetivo válido");
       return;
     }
+    if (useCustomDate && !targetDate) {
+      toast.error("Elige una fecha límite");
+      return;
+    }
     const unit = goalType === "personalizada" ? customUnit.trim() : GOAL_TYPE_META[goalType].unit;
+    const finalTargetDate = useCustomDate
+      ? targetDate
+      : deadlineDays !== null
+        ? addDaysIso(deadlineDays)
+        : null;
     createGoal.mutate(
       {
         title: title.trim(),
         goalType,
         unit,
         targetValue: value,
-        targetDate: targetDate || null,
+        targetDate: finalTargetDate,
       },
       {
         onSuccess: () => {
@@ -238,11 +253,40 @@ export default function MetasPage() {
                 />
               )}
             </div>
-            <Input
-              type="date"
-              value={targetDate}
-              onChange={(e) => setTargetDate(e.target.value)}
-            />
+            <div className={styles.fieldColumn}>
+              <span className={styles.sectionLabel}>Tiempo límite (opcional)</span>
+              <div className={styles.chipGrid}>
+                {GOAL_DEADLINE_PRESETS.map((preset) => (
+                  <button
+                    key={preset.days}
+                    type="button"
+                    className={`${styles.chip} ${
+                      !useCustomDate && deadlineDays === preset.days ? styles.chipActive : ""
+                    }`}
+                    onClick={() => {
+                      setUseCustomDate(false);
+                      setDeadlineDays(preset.days);
+                    }}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  className={`${styles.chip} ${useCustomDate ? styles.chipActive : ""}`}
+                  onClick={() => setUseCustomDate(true)}
+                >
+                  Otra fecha
+                </button>
+              </div>
+              {useCustomDate && (
+                <Input
+                  type="date"
+                  value={targetDate}
+                  onChange={(e) => setTargetDate(e.target.value)}
+                />
+              )}
+            </div>
             <Button
               type="button"
               onClick={handleCreate}
