@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { Flame, Dumbbell, TrendingUp, CalendarDays } from "lucide-react";
-import { useAuthSession } from "@/hooks/useProfile";
+import { useAuthSession, useMarkTutorialSeen } from "@/hooks/useProfile";
 import { useWorkoutStats } from "@/hooks/useWorkoutCompletions";
 import { Progress } from "@/components/ui/Progress";
+import { SpotlightTour, type TourStep } from "@/components/SpotlightTour";
 import { WORKOUT_CATEGORY_LABEL } from "@/lib/workouts";
 import styles from "./page.module.css";
 
@@ -40,6 +42,13 @@ export default function ProgresoPage() {
   const { data } = useAuthSession();
   const profile = data?.profile;
   const { data: stats, isLoading } = useWorkoutStats();
+  const markTutorialSeen = useMarkTutorialSeen("progreso");
+
+  const [tourOpen, setTourOpen] = useState(false);
+  const [tourDismissedThisVisit, setTourDismissedThisVisit] = useState(false);
+  const statsGridRef = useRef<HTMLDivElement>(null);
+  const weekCardRef = useRef<HTMLDivElement>(null);
+  const calendarCardRef = useRef<HTMLDivElement>(null);
 
   const last7Days = stats?.last7Days ?? [];
   const maxDayCount = Math.max(1, ...last7Days.map((d) => d.count));
@@ -51,11 +60,52 @@ export default function ProgresoPage() {
   const calendarDays = stats?.calendarDays ?? [];
   const leadingBlanks = calendarDays.length > 0 ? mondayFirstWeekday(calendarDays[0].date) : 0;
 
+  useEffect(() => {
+    if (isLoading) return;
+    if (!profile) return;
+    if (profile.hasSeenProgresoTutorial) return;
+    if (tourDismissedThisVisit) return;
+    const timeout = setTimeout(() => setTourOpen(true), 300);
+    return () => clearTimeout(timeout);
+  }, [isLoading, profile, tourDismissedThisVisit]);
+
+  const closeTour = () => {
+    setTourOpen(false);
+    setTourDismissedThisVisit(true);
+  };
+
+  const handleTourFinish = () => closeTour();
+  const handleTourNeverShowAgain = () => {
+    closeTour();
+    markTutorialSeen.mutate();
+  };
+
+  const tourSteps: TourStep[] = [
+    {
+      ref: statsGridRef,
+      title: "Tus números clave",
+      description:
+        "Aquí ves tu racha actual, tu mejor racha y el total de entrenamientos completados.",
+    },
+    {
+      ref: weekCardRef,
+      title: "Tu semana",
+      description:
+        "Esta gráfica muestra cuántos entrenamientos hiciste cada día, de lunes a domingo.",
+    },
+    {
+      ref: calendarCardRef,
+      title: "Tu calendario",
+      description:
+        "Cada día marcado es un día en que entrenaste. Entre más oscuro, más entrenos ese día.",
+    },
+  ];
+
   return (
     <div className={styles.page}>
       <h1 className={styles.title}>Tu progreso</h1>
 
-      <div className={styles.statsGrid}>
+      <div className={styles.statsGrid} ref={statsGridRef}>
         <div className={styles.statCard}>
           <Flame size={18} className={styles.statIconStreak} />
           <span className={styles.statValue}>
@@ -77,7 +127,7 @@ export default function ProgresoPage() {
         </div>
       </div>
 
-      <div className={styles.chartCard}>
+      <div className={styles.chartCard} ref={weekCardRef}>
         <p className={styles.chartTitle}>Semana (lunes a domingo)</p>
         <div className={styles.bars}>
           {last7Days.map((entry) => (
@@ -99,7 +149,7 @@ export default function ProgresoPage() {
         </div>
       </div>
 
-      <div className={styles.chartCard}>
+      <div className={styles.chartCard} ref={calendarCardRef}>
         <div className={styles.calendarHeader}>
           <CalendarDays size={16} className={styles.calendarIcon} />
           <p className={styles.chartTitle}>
@@ -176,6 +226,14 @@ export default function ProgresoPage() {
         <p className={styles.note}>
           Completa entrenamientos para ver aquí tu evolución real.
         </p>
+      )}
+
+      {tourOpen && (
+        <SpotlightTour
+          steps={tourSteps}
+          onFinish={handleTourFinish}
+          onNeverShowAgain={handleTourNeverShowAgain}
+        />
       )}
     </div>
   );

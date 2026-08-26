@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Plus, Target, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Progress } from "@/components/ui/Progress";
 import { Spinner } from "@/components/ui/Spinner";
+import { SpotlightTour, type TourStep } from "@/components/SpotlightTour";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +21,7 @@ import {
   useDeleteGoal,
   useUpdateGoalProgress,
 } from "@/hooks/useGoals";
+import { useAuthSession, useMarkTutorialSeen } from "@/hooks/useProfile";
 import {
   GOAL_TYPE_META,
   GOAL_DEADLINE_PRESETS,
@@ -35,9 +37,17 @@ const GOAL_TYPES: GoalType[] = ["peso", "distancia", "repeticiones", "personaliz
 
 export default function MetasPage() {
   const { data, isFetching } = useGoals();
+  const { data: sessionData } = useAuthSession();
+  const markTutorialSeen = useMarkTutorialSeen("metas");
   const createGoal = useCreateGoal();
   const deleteGoal = useDeleteGoal();
   const updateProgress = useUpdateGoalProgress();
+
+  const [tourOpen, setTourOpen] = useState(false);
+  const [tourDismissedThisVisit, setTourDismissedThisVisit] = useState(false);
+  const newButtonRef = useRef<HTMLButtonElement>(null);
+  const firstCardRef = useRef<HTMLDivElement>(null);
+  const firstDeleteButtonRef = useRef<HTMLButtonElement>(null);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -52,6 +62,46 @@ export default function MetasPage() {
   const [progressValue, setProgressValue] = useState("");
 
   const goals = data?.goals ?? [];
+
+  useEffect(() => {
+    if (isFetching) return;
+    if (!sessionData?.profile) return;
+    if (sessionData.profile.hasSeenMetasTutorial) return;
+    if (tourDismissedThisVisit) return;
+    const timeout = setTimeout(() => setTourOpen(true), 300);
+    return () => clearTimeout(timeout);
+  }, [isFetching, sessionData?.profile, tourDismissedThisVisit]);
+
+  const closeTour = () => {
+    setTourOpen(false);
+    setTourDismissedThisVisit(true);
+  };
+
+  const handleTourFinish = () => closeTour();
+  const handleTourNeverShowAgain = () => {
+    closeTour();
+    markTutorialSeen.mutate();
+  };
+
+  const tourSteps: TourStep[] = [
+    {
+      ref: newButtonRef,
+      title: "Crea una meta",
+      description:
+        "Toca aquí para definir un objetivo claro y medible, con o sin fecha límite.",
+    },
+    {
+      ref: firstCardRef,
+      title: "Actualiza tu progreso",
+      description:
+        "Toca cualquier meta para actualizar cuánto llevas avanzado hacia tu objetivo.",
+    },
+    {
+      ref: firstDeleteButtonRef,
+      title: "Elimina una meta",
+      description: "Este botón elimina la meta si ya no la necesitas.",
+    },
+  ];
 
   const resetCreateForm = () => {
     setTitle("");
@@ -145,6 +195,7 @@ export default function MetasPage() {
           size="sm"
           onClick={() => setCreateOpen(true)}
           className={styles.newButton}
+          ref={newButtonRef}
         >
           <Plus size={16} /> Nueva
         </Button>
@@ -161,11 +212,11 @@ export default function MetasPage() {
         </div>
       ) : (
         <div className={styles.list}>
-          {goals.map((goal) => {
+          {goals.map((goal, index) => {
             const progress = goalProgress(goal);
             const deadline = goalDeadlineLabel(goal.targetDate);
             return (
-              <div key={goal.id} className={styles.cardRow}>
+              <div key={goal.id} className={styles.cardRow} ref={index === 0 ? firstCardRef : undefined}>
                 <button
                   type="button"
                   className={styles.card}
@@ -192,6 +243,7 @@ export default function MetasPage() {
                   type="button"
                   className={styles.deleteButton}
                   aria-label={`Eliminar ${goal.title}`}
+                  ref={index === 0 ? firstDeleteButtonRef : undefined}
                   onClick={(event) => {
                     event.stopPropagation();
                     handleDelete(goal);
@@ -326,6 +378,14 @@ export default function MetasPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {tourOpen && (
+        <SpotlightTour
+          steps={tourSteps}
+          onFinish={handleTourFinish}
+          onNeverShowAgain={handleTourNeverShowAgain}
+        />
+      )}
     </div>
   );
 }

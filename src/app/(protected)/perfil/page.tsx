@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   LogOut,
   Flame,
@@ -40,10 +40,12 @@ import {
   useUploadAvatar,
   useUpdateNotificationPreferences,
   useSaveBodyProfile,
+  useMarkTutorialSeen,
   BODY_TYPE_LABEL,
   SEX_LABEL,
   type Profile,
 } from "@/hooks/useProfile";
+import { SpotlightTour, type TourStep } from "@/components/SpotlightTour";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useSendTestNotification } from "@/hooks/useNotifications";
 import { useLogout } from "@/hooks/useAuthActions";
@@ -84,6 +86,7 @@ export default function PerfilPage() {
   const { data: stats } = useWorkoutStats();
   const { data: photosData } = useProgressPhotos();
   const uploadPhoto = useUploadProgressPhoto();
+  const markTutorialSeen = useMarkTutorialSeen("perfil");
   const profile = data?.profile;
   const initial = profile?.displayName?.trim().charAt(0).toUpperCase() ?? "A";
 
@@ -100,6 +103,11 @@ export default function PerfilPage() {
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [bodyDataEditing, setBodyDataEditing] = useState(false);
   const [bodyData, setBodyData] = useState<BodyDataFormValue>(emptyBodyDataFormValue());
+  const [tourOpen, setTourOpen] = useState(false);
+  const [tourDismissedThisVisit, setTourDismissedThisVisit] = useState(false);
+  const editButtonRef = useRef<HTMLButtonElement>(null);
+  const statsCardRef = useRef<HTMLDivElement>(null);
+  const evolutionSectionRef = useRef<HTMLDivElement>(null);
 
   const openEdit = () => {
     setEditName(profile?.displayName ?? "");
@@ -243,6 +251,46 @@ export default function PerfilPage() {
 
   const slots = buildMilestoneSlots(photosData?.photos ?? []);
 
+  useEffect(() => {
+    if (!profile) return;
+    if (profile.hasSeenPerfilTutorial) return;
+    if (tourDismissedThisVisit) return;
+    const timeout = setTimeout(() => setTourOpen(true), 300);
+    return () => clearTimeout(timeout);
+  }, [profile, tourDismissedThisVisit]);
+
+  const closeTour = () => {
+    setTourOpen(false);
+    setTourDismissedThisVisit(true);
+  };
+
+  const handleTourFinish = () => closeTour();
+  const handleTourNeverShowAgain = () => {
+    closeTour();
+    markTutorialSeen.mutate();
+  };
+
+  const tourSteps: TourStep[] = [
+    {
+      ref: editButtonRef,
+      title: "Edita tu perfil",
+      description:
+        "Aquí cambias tu nombre, foto, datos corporales y preferencias de notificaciones.",
+    },
+    {
+      ref: statsCardRef,
+      title: "Tus estadísticas",
+      description:
+        "Racha actual, mejor racha y el total de entrenamientos que has completado.",
+    },
+    {
+      ref: evolutionSectionRef,
+      title: "Evolución física",
+      description:
+        "Sube una foto el día 1 y luego una cada mes para ver cómo cambia tu cuerpo con el tiempo.",
+    },
+  ];
+
   const handleSlotClick = (slot: MilestoneSlot) => {
     if (slot.status === "taken") {
       setViewingSlot(slot);
@@ -319,12 +367,13 @@ export default function PerfilPage() {
           size="sm"
           onClick={openEdit}
           className={styles.editButton}
+          ref={editButtonRef}
         >
           <Settings size={14} /> Editar perfil
         </Button>
       </div>
 
-      <div className={styles.statsCard}>
+      <div className={styles.statsCard} ref={statsCardRef}>
         <div className={styles.stat}>
           <Flame size={18} className={styles.statIconStreak} />
           <span className={styles.statValue}>
@@ -346,7 +395,7 @@ export default function PerfilPage() {
         </div>
       </div>
 
-      <div className={styles.evolutionSection}>
+      <div className={styles.evolutionSection} ref={evolutionSectionRef}>
         <div className={styles.evolutionHeader}>
           <h2 className={styles.evolutionTitle}>Evolución física</h2>
           <p className={styles.evolutionSubtitle}>
@@ -760,6 +809,14 @@ export default function PerfilPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {tourOpen && (
+        <SpotlightTour
+          steps={tourSteps}
+          onFinish={handleTourFinish}
+          onNeverShowAgain={handleTourNeverShowAgain}
+        />
+      )}
     </div>
   );
 }

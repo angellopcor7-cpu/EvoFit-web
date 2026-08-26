@@ -43,6 +43,9 @@ export type Profile = {
   hasSeenWelcome: boolean;
   hasSeenWorkoutsTutorial: boolean;
   hasSeenHomeTutorial: boolean;
+  hasSeenProgresoTutorial: boolean;
+  hasSeenMetasTutorial: boolean;
+  hasSeenPerfilTutorial: boolean;
   weightKg: number | null;
   heightCm: number | null;
   age: number | null;
@@ -67,6 +70,9 @@ type ProfileRow = {
   has_seen_welcome: boolean;
   has_seen_workouts_tutorial: boolean;
   has_seen_home_tutorial: boolean;
+  has_seen_progreso_tutorial: boolean;
+  has_seen_metas_tutorial: boolean;
+  has_seen_perfil_tutorial: boolean;
   weight_kg: number | null;
   height_cm: number | null;
   age: number | null;
@@ -92,6 +98,9 @@ function mapProfile(row: ProfileRow): Profile {
     hasSeenWelcome: row.has_seen_welcome,
     hasSeenWorkoutsTutorial: row.has_seen_workouts_tutorial,
     hasSeenHomeTutorial: row.has_seen_home_tutorial,
+    hasSeenProgresoTutorial: row.has_seen_progreso_tutorial,
+    hasSeenMetasTutorial: row.has_seen_metas_tutorial,
+    hasSeenPerfilTutorial: row.has_seen_perfil_tutorial,
     weightKg: row.weight_kg,
     heightCm: row.height_cm,
     age: row.age,
@@ -216,6 +225,37 @@ export const useMarkHomeTutorialSeen = () => {
       const { error } = await supabase
         .from("profiles")
         .update({ has_seen_home_tutorial: true })
+        .eq("id", user.id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["auth", "session"] });
+    },
+  });
+};
+
+const TUTORIAL_COLUMN: Record<
+  "progreso" | "metas" | "perfil",
+  "has_seen_progreso_tutorial" | "has_seen_metas_tutorial" | "has_seen_perfil_tutorial"
+> = {
+  progreso: "has_seen_progreso_tutorial",
+  metas: "has_seen_metas_tutorial",
+  perfil: "has_seen_perfil_tutorial",
+};
+
+export const useMarkTutorialSeen = (page: "progreso" | "metas" | "perfil") => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (): Promise<void> => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("No autenticado");
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({ [TUTORIAL_COLUMN[page]]: true })
         .eq("id", user.id);
       if (error) throw new Error(error.message);
     },
