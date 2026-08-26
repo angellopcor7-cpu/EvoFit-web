@@ -43,8 +43,21 @@ import {
   type WorkoutRoutine,
 } from "@/lib/workouts";
 import type { UserRoutine } from "@/lib/userRoutines";
-import type { MuscleGroup } from "@/lib/exercises";
+import { MUSCLE_GROUP_LABEL, type MuscleGroup } from "@/lib/exercises";
 import styles from "./page.module.css";
+
+function muscleGroupsSummary(exercises: { muscleGroup: MuscleGroup }[]): string {
+  const seen = new Set<string>();
+  const labels: string[] = [];
+  for (const e of exercises) {
+    const label = MUSCLE_GROUP_LABEL[e.muscleGroup] ?? e.muscleGroup;
+    if (!seen.has(label)) {
+      seen.add(label);
+      labels.push(label);
+    }
+  }
+  return labels.join(", ");
+}
 
 const LEVEL_LABEL: Record<string, string> = {
   principiante: "Principiante",
@@ -302,7 +315,7 @@ export default function EntrenamientosPage() {
       subtitle:
         routine.splitType === "sesion"
           ? `${routine.exercises.length} bloques · ${UI_CATEGORY_META[activeCategory].label}`
-          : `${routine.exercises.length} ejercicios · Nivel ${LEVEL_LABEL[routine.level] ?? routine.level}`,
+          : `${muscleGroupsSummary(routine.exercises)} · Nivel ${LEVEL_LABEL[routine.level] ?? routine.level}`,
       exercises: routine.exercises.map((e) => ({
         id: e.id,
         exerciseName: e.exerciseName,
@@ -321,7 +334,7 @@ export default function EntrenamientosPage() {
   const selectUserRoutine = (routine: UserRoutine) => {
     setSelected({
       title: routine.title,
-      subtitle: `${routine.exercises.length} ejercicios · Tu rutina`,
+      subtitle: `${muscleGroupsSummary(routine.exercises)} · Tu rutina`,
       exercises: routine.exercises.map((e) => ({
         id: e.id,
         exerciseName: e.exerciseName,
