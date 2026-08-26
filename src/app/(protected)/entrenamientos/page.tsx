@@ -177,7 +177,7 @@ function RoutineCard({
     <div className={styles.cardRow}>
       <button type="button" className={styles.card} onClick={onSelect}>
         <div className={styles.cardIcon}>
-          <Dumbbell size={20} />
+          <Dumbbell size={17} />
         </div>
         <div className={styles.cardInfo}>
           <p className={styles.cardName}>{title}</p>
