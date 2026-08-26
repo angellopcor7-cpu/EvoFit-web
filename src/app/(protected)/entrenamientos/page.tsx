@@ -18,6 +18,7 @@ import {
   Timer,
   Trash2,
   ChevronDown,
+  SlidersHorizontal,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
@@ -231,6 +232,8 @@ export default function EntrenamientosPage() {
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [selectedBodyType, setSelectedBodyType] = useState<string | null>(null);
+  const [categoryPickerOpen, setCategoryPickerOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [autoOpenedRoutine, setAutoOpenedRoutine] = useState(false);
   const [expandedExerciseIds, setExpandedExerciseIds] = useState<Set<string>>(
     () => new Set(),
@@ -396,45 +399,23 @@ export default function EntrenamientosPage() {
     (isFetching && allRoutines.length === 0) ||
     (isFetchingUser && myRoutines.length === 0);
 
-  const renderFilters = () => {
-    if (!showGroupChips && !showBodyTypeChips && availableLevels.length <= 1) return null;
-    return (
-      <div className={styles.filters}>
-        {showGroupChips && availableGroups.length > 1 && (
-          <FilterChips
-            label="Grupo"
-            active={selectedGroup}
-            onSelect={setSelectedGroup}
-            options={[
-              { value: null, label: "Todos" },
-              ...availableGroups.map((g) => ({ value: g, label: g })),
-            ]}
-          />
-        )}
-        {showBodyTypeChips && availableBodyTypes.length > 1 && (
-          <FilterChips
-            label="Tipo de cuerpo"
-            active={selectedBodyType}
-            onSelect={setSelectedBodyType}
-            options={[
-              { value: null, label: "Todos" },
-              ...availableBodyTypes.map((bt) => ({ value: bt, label: BODY_TYPE_LABEL[bt] })),
-            ]}
-          />
-        )}
-        {availableLevels.length > 1 && (
-          <FilterChips
-            label="Nivel"
-            active={selectedLevel}
-            onSelect={setSelectedLevel}
-            options={[
-              { value: null, label: "Todos" },
-              ...availableLevels.map((l) => ({ value: l, label: LEVEL_LABEL[l] ?? l })),
-            ]}
-          />
-        )}
-      </div>
-    );
+  // Grupo/tipo de cuerpo/nivel ya no se muestran como chips sueltos en la
+  // pantalla — viven dentro del diálogo "Filtros" para no saturar de
+  // botones (a petición del usuario). hasAnyFilters decide si ese botón
+  // se muestra siquiera.
+  const hasAnyFilters =
+    (showGroupChips && availableGroups.length > 1) ||
+    (showBodyTypeChips && availableBodyTypes.length > 1) ||
+    availableLevels.length > 1;
+
+  const activeFilterCount = [selectedGroup, selectedBodyType, selectedLevel].filter(
+    Boolean,
+  ).length;
+
+  const clearFilters = () => {
+    setSelectedGroup(null);
+    setSelectedBodyType(null);
+    setSelectedLevel(null);
   };
 
   const renderRoutineList = (emptyMessage: string) => {
@@ -477,40 +458,43 @@ export default function EntrenamientosPage() {
       <div className={styles.header}>
         <div>
           <h1 className={styles.title}>Tus rutinas</h1>
-          <p className={styles.subtitle}>{meta.label}</p>
-        </div>
-        {meta.mode === "catalog" && (
-          <Button
-            asChild
+          <button
             type="button"
-            variant="outline"
-            size="sm"
-            className={styles.newButton}
+            className={styles.categoryButton}
+            onClick={() => setCategoryPickerOpen(true)}
           >
-            <Link href={`/entrenamientos/crear?category=${activeCategory}`}>
-              <Plus size={16} /> Nueva
-            </Link>
-          </Button>
-        )}
-      </div>
-
-      <div className={styles.categoryChips}>
-        {UI_CATEGORIES.map((category) => {
-          const catMeta = UI_CATEGORY_META[category];
-          const Icon = catMeta.icon;
-          const isActive = category === activeCategory;
-          return (
-            <button
-              key={category}
+            <meta.icon size={14} />
+            <span>{meta.label}</span>
+            <ChevronDown size={14} />
+          </button>
+        </div>
+        <div className={styles.headerActions}>
+          {hasAnyFilters && (
+            <Button
               type="button"
-              className={`${styles.categoryChip} ${isActive ? styles.categoryChipActive : ""}`}
-              onClick={() => selectCategory(category)}
+              variant="outline"
+              size="sm"
+              className={styles.filtersButton}
+              onClick={() => setFiltersOpen(true)}
             >
-              <Icon size={14} />
-              <span>{catMeta.label}</span>
-            </button>
-          );
-        })}
+              <SlidersHorizontal size={14} />
+              Filtros{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
+            </Button>
+          )}
+          {meta.mode === "catalog" && (
+            <Button
+              asChild
+              type="button"
+              variant="outline"
+              size="sm"
+              className={styles.newButton}
+            >
+              <Link href={`/entrenamientos/crear?category=${activeCategory}`}>
+                <Plus size={16} /> Nueva
+              </Link>
+            </Button>
+          )}
+        </div>
       </div>
 
       {loading ? (
@@ -529,7 +513,6 @@ export default function EntrenamientosPage() {
           </TabsList>
 
           <TabsContent value="rutinas">
-            {renderFilters()}
             {renderRoutineList(`Todavía no hay sesiones predefinidas para ${meta.label}.`)}
           </TabsContent>
 
@@ -562,10 +545,92 @@ export default function EntrenamientosPage() {
       ) : (
         <>
           <p className={styles.sectionTitle}>Rutinas predeterminadas</p>
-          {renderFilters()}
           {renderRoutineList(`Todavía no hay sesiones para ${meta.label}.`)}
         </>
       )}
+
+      <Dialog open={categoryPickerOpen} onOpenChange={setCategoryPickerOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Elige una categoría</DialogTitle>
+          </DialogHeader>
+          <div className={styles.categoryList}>
+            {UI_CATEGORIES.map((category) => {
+              const catMeta = UI_CATEGORY_META[category];
+              const Icon = catMeta.icon;
+              const isActive = category === activeCategory;
+              return (
+                <button
+                  key={category}
+                  type="button"
+                  className={`${styles.categoryOption} ${
+                    isActive ? styles.categoryOptionActive : ""
+                  }`}
+                  onClick={() => {
+                    selectCategory(category);
+                    setCategoryPickerOpen(false);
+                  }}
+                >
+                  <Icon size={18} />
+                  <span>{catMeta.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={filtersOpen} onOpenChange={setFiltersOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Filtros</DialogTitle>
+            <DialogDescription>{meta.label}</DialogDescription>
+          </DialogHeader>
+          <div className={styles.filters}>
+            {showGroupChips && availableGroups.length > 1 && (
+              <FilterChips
+                label="Grupo"
+                active={selectedGroup}
+                onSelect={setSelectedGroup}
+                options={[
+                  { value: null, label: "Todos" },
+                  ...availableGroups.map((g) => ({ value: g, label: g })),
+                ]}
+              />
+            )}
+            {showBodyTypeChips && availableBodyTypes.length > 1 && (
+              <FilterChips
+                label="Tipo de cuerpo"
+                active={selectedBodyType}
+                onSelect={setSelectedBodyType}
+                options={[
+                  { value: null, label: "Todos" },
+                  ...availableBodyTypes.map((bt) => ({
+                    value: bt,
+                    label: BODY_TYPE_LABEL[bt],
+                  })),
+                ]}
+              />
+            )}
+            {availableLevels.length > 1 && (
+              <FilterChips
+                label="Nivel"
+                active={selectedLevel}
+                onSelect={setSelectedLevel}
+                options={[
+                  { value: null, label: "Todos" },
+                  ...availableLevels.map((l) => ({ value: l, label: LEVEL_LABEL[l] ?? l })),
+                ]}
+              />
+            )}
+          </div>
+          {activeFilterCount > 0 && (
+            <Button type="button" variant="outline" size="sm" onClick={clearFilters}>
+              Limpiar filtros
+            </Button>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={selected !== null}

@@ -8,8 +8,83 @@
 
 .header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+  gap: var(--spacing-3);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  flex-shrink: 0;
+}
+
+.categoryButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  margin-top: var(--spacing-1);
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--muted-foreground);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.categoryButton:hover {
+  color: var(--primary);
+}
+
+.filtersButton {
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
+.categoryList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.categoryOption {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--foreground);
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--animation-duration-fast) ease,
+    color var(--animation-duration-fast) ease,
+    background-color var(--animation-duration-fast) ease;
+}
+
+.categoryOption svg {
+  color: var(--muted-foreground);
+  flex-shrink: 0;
+}
+
+.categoryOptionActive {
+  background: color-mix(in srgb, var(--primary) 14%, var(--card));
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.categoryOptionActive svg {
+  color: var(--primary);
 }
 
 .title {
@@ -20,59 +95,11 @@
   color: var(--foreground);
 }
 
-.subtitle {
-  margin: var(--spacing-1) 0 0;
-  color: var(--muted-foreground);
-  font-size: 0.8rem;
-}
-
 .newButton {
   border-radius: var(--radius-full);
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-1);
-}
-
-.categoryChips {
-  display: flex;
-  gap: var(--spacing-2);
-  overflow-x: auto;
-  padding: 0 var(--spacing-1) var(--spacing-2);
-  margin: 0 calc(var(--spacing-1) * -1);
-  scroll-padding-inline: var(--spacing-1);
-  scrollbar-width: none;
-}
-
-.categoryChips::-webkit-scrollbar {
-  display: none;
-}
-
-.categoryChip {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-1);
-  padding: var(--spacing-2) var(--spacing-3);
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-full);
-  color: var(--muted-foreground);
-  font-family: inherit;
-  font-size: 0.78rem;
-  font-weight: 600;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: border-color var(--animation-duration-fast) ease, color var(--animation-duration-fast) ease, background var(--animation-duration-fast) ease;
-}
-
-.categoryChip svg {
-  color: inherit;
-}
-
-.categoryChipActive {
-  background: color-mix(in srgb, var(--primary) 16%, var(--card));
-  border-color: var(--primary);
-  color: var(--primary);
 }
 
 .loading {
