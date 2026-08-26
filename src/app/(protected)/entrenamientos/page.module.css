@@ -140,6 +140,17 @@
   font-size: 0.85rem;
 }
 
+.emptyStateActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--spacing-2);
+}
+
+.addPresetButton {
+  margin-bottom: var(--spacing-3);
+}
+
 .cardRow {
   display: flex;
   align-items: stretch;

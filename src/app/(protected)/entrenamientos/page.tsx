@@ -34,7 +34,12 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
 import { WorkoutSession } from "@/components/WorkoutSession";
 import { getExerciseImageUrl } from "@/lib/exerciseImages";
 import { useWorkoutRoutines } from "@/hooks/useWorkoutRoutines";
-import { useUserRoutines, useDeleteUserRoutine } from "@/hooks/useUserRoutines";
+import {
+  useUserRoutines,
+  useCreateUserRoutine,
+  useDeleteUserRoutine,
+} from "@/hooks/useUserRoutines";
+import { RoutinePickerDialog } from "@/components/RoutinePickerDialog";
 import { useCompleteWorkout } from "@/hooks/useWorkoutCompletions";
 import {
   BODY_TYPES,
@@ -236,6 +241,7 @@ export default function EntrenamientosPage() {
   const { data, isFetching } = useWorkoutRoutines();
   const { data: userData, isFetching: isFetchingUser } = useUserRoutines();
   const deleteUserRoutine = useDeleteUserRoutine();
+  const createUserRoutine = useCreateUserRoutine();
   const completeWorkout = useCompleteWorkout();
   const [selected, setSelected] = useState<SelectedRoutine | null>(null);
   const [sessionActive, setSessionActive] = useState(false);
@@ -248,6 +254,7 @@ export default function EntrenamientosPage() {
   const [categoryPickerOpen, setCategoryPickerOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [autoOpenedRoutine, setAutoOpenedRoutine] = useState(false);
+  const [addPresetOpen, setAddPresetOpen] = useState(false);
   const [expandedExerciseIds, setExpandedExerciseIds] = useState<Set<string>>(
     () => new Set(),
   );
@@ -408,6 +415,29 @@ export default function EntrenamientosPage() {
     });
   };
 
+  const handleAddPresetRoutine = (routineId: string) => {
+    const routine = categoryRoutines.find((r) => r.id === routineId);
+    if (!routine) return;
+    createUserRoutine.mutate(
+      {
+        title: routine.title,
+        exercises: routine.exercises.map((e) => ({
+          exerciseId: null,
+          exerciseName: e.exerciseName,
+          muscleGroup: e.muscleGroup,
+          sets: e.sets,
+          repsLabel: e.repsLabel,
+          durationLabel: e.durationLabel,
+          restLabel: e.restLabel,
+        })),
+      },
+      {
+        onSuccess: () => toast.success(`"${routine.title}" se agregó a Mis rutinas`),
+        onError: () => toast.error("No se pudo agregar la rutina"),
+      },
+    );
+  };
+
   const loading =
     (isFetching && allRoutines.length === 0) ||
     (isFetchingUser && myRoutines.length === 0);
@@ -515,6 +545,7 @@ export default function EntrenamientosPage() {
           <Spinner />
         </div>
       ) : meta.mode === "catalog" ? (
+        <>
         <Tabs defaultValue="rutinas" className={styles.tabs} key={activeCategory}>
           <TabsList>
             <TabsTrigger value="rutinas">
@@ -534,27 +565,70 @@ export default function EntrenamientosPage() {
               <div className={styles.emptyState}>
                 <Sparkles size={22} />
                 <p>Aún no has creado ninguna rutina.</p>
-                <Button asChild size="sm">
-                  <Link href={`/entrenamientos/crear?category=${activeCategory}`}>
-                    <Plus size={16} /> Crear rutina
-                  </Link>
-                </Button>
+                <div className={styles.emptyStateActions}>
+                  <Button asChild size="sm">
+                    <Link href={`/entrenamientos/crear?category=${activeCategory}`}>
+                      <Plus size={16} /> Crear rutina
+                    </Link>
+                  </Button>
+                  {categoryRoutines.length > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setAddPresetOpen(true)}
+                    >
+                      <Plus size={16} /> Agregar rutina predeterminada
+                    </Button>
+                  )}
+                </div>
               </div>
             ) : (
-              <div className={styles.list}>
-                {myRoutines.map((routine) => (
-                  <RoutineCard
-                    key={routine.id}
-                    title={routine.title}
-                    meta={`${routine.exercises.length} ejercicios`}
-                    onSelect={() => selectUserRoutine(routine)}
-                    onDelete={() => handleDeleteUserRoutine(routine)}
-                  />
-                ))}
-              </div>
+              <>
+                {categoryRoutines.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className={styles.addPresetButton}
+                    onClick={() => setAddPresetOpen(true)}
+                  >
+                    <Plus size={16} /> Agregar rutina predeterminada
+                  </Button>
+                )}
+                <div className={styles.list}>
+                  {myRoutines.map((routine) => (
+                    <RoutineCard
+                      key={routine.id}
+                      title={routine.title}
+                      meta={`${routine.exercises.length} ejercicios`}
+                      onSelect={() => selectUserRoutine(routine)}
+                      onDelete={() => handleDeleteUserRoutine(routine)}
+                    />
+                  ))}
+                </div>
+              </>
             )}
           </TabsContent>
         </Tabs>
+
+        <RoutinePickerDialog
+          open={addPresetOpen}
+          onOpenChange={setAddPresetOpen}
+          title="Agregar rutina predeterminada"
+          items={categoryRoutines.map((r) => ({
+            id: r.id,
+            title: r.title,
+            subtitle:
+              r.splitType === "sesion"
+                ? `${r.exercises.length} bloques`
+                : `Nivel ${LEVEL_LABEL[r.level] ?? r.level}`,
+          }))}
+          selectedId=""
+          onSelect={handleAddPresetRoutine}
+          emptyLabel="No encontramos rutinas con ese nombre."
+        />
+        </>
       ) : (
         <>
           <p className={styles.sectionTitle}>Rutinas predeterminadas</p>
