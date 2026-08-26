@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -40,6 +40,11 @@ import {
   useDeleteUserRoutine,
 } from "@/hooks/useUserRoutines";
 import { RoutinePickerDialog } from "@/components/RoutinePickerDialog";
+import { SpotlightTour, type TourStep } from "@/components/SpotlightTour";
+import {
+  useAuthSession,
+  useMarkWorkoutsTutorialSeen,
+} from "@/hooks/useProfile";
 import { useCompleteWorkout } from "@/hooks/useWorkoutCompletions";
 import {
   BODY_TYPES,
@@ -167,14 +172,16 @@ function RoutineCard({
   meta,
   onSelect,
   onDelete,
+  cardRef,
 }: {
   title: string;
   meta: string;
   onSelect: () => void;
   onDelete?: () => void;
+  cardRef?: RefObject<HTMLDivElement | null>;
 }) {
   return (
-    <div className={styles.cardRow}>
+    <div className={styles.cardRow} ref={cardRef}>
       <button type="button" className={styles.card} onClick={onSelect}>
         <div className={styles.cardIcon}>
           <Dumbbell size={17} />
@@ -241,6 +248,8 @@ export default function EntrenamientosPage() {
   const searchParams = useSearchParams();
   const { data, isFetching } = useWorkoutRoutines();
   const { data: userData, isFetching: isFetchingUser } = useUserRoutines();
+  const { data: sessionData } = useAuthSession();
+  const markTutorialSeen = useMarkWorkoutsTutorialSeen();
   const deleteUserRoutine = useDeleteUserRoutine();
   const createUserRoutine = useCreateUserRoutine();
   const completeWorkout = useCompleteWorkout();
@@ -253,6 +262,13 @@ export default function EntrenamientosPage() {
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [selectedBodyType, setSelectedBodyType] = useState<string | null>(null);
   const [categoryPickerOpen, setCategoryPickerOpen] = useState(false);
+  const [tourOpen, setTourOpen] = useState(false);
+  const [tourDismissedThisVisit, setTourDismissedThisVisit] = useState(false);
+  const categoryButtonRef = useRef<HTMLButtonElement>(null);
+  const filtersButtonRef = useRef<HTMLButtonElement>(null);
+  const newButtonRef = useRef<HTMLAnchorElement>(null);
+  const tabsListRef = useRef<HTMLDivElement>(null);
+  const firstCardRef = useRef<HTMLDivElement>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [autoOpenedRoutine, setAutoOpenedRoutine] = useState(false);
   const [addPresetOpen, setAddPresetOpen] = useState(false);
@@ -443,6 +459,62 @@ export default function EntrenamientosPage() {
     (isFetching && allRoutines.length === 0) ||
     (isFetchingUser && myRoutines.length === 0);
 
+  useEffect(() => {
+    if (loading) return;
+    if (!sessionData?.profile) return;
+    if (sessionData.profile.hasSeenWorkoutsTutorial) return;
+    if (tourDismissedThisVisit) return;
+    const timeout = setTimeout(() => setTourOpen(true), 300);
+    return () => clearTimeout(timeout);
+  }, [loading, sessionData?.profile, tourDismissedThisVisit]);
+
+  const closeTour = () => {
+    setTourOpen(false);
+    setTourDismissedThisVisit(true);
+  };
+
+  const handleTourFinish = () => {
+    closeTour();
+  };
+
+  const handleTourNeverShowAgain = () => {
+    closeTour();
+    markTutorialSeen.mutate();
+  };
+
+  const tourSteps: TourStep[] = [
+    {
+      ref: categoryButtonRef,
+      title: "Elige tu categoría",
+      description:
+        "Aquí cambias entre Musculación, Calistenia, Cardio, Zumba y el resto de categorías de entrenamiento.",
+    },
+    {
+      ref: tabsListRef,
+      title: "Predeterminadas o tuyas",
+      description:
+        "\"Rutinas predeterminadas\" son las que ya vienen armadas. \"Mis rutinas\" son las que tú creas o guardas.",
+    },
+    {
+      ref: filtersButtonRef,
+      title: "Filtra para encontrar más rápido",
+      description:
+        "Filtra por nivel, grupo muscular o tipo de cuerpo para encontrar la rutina ideal para ti.",
+    },
+    {
+      ref: newButtonRef,
+      title: "Crea tu propia rutina",
+      description:
+        "Arma una rutina desde cero eligiendo tú mismo los ejercicios, series y repeticiones.",
+    },
+    {
+      ref: firstCardRef,
+      title: "Toca una rutina",
+      description:
+        "Toca cualquier tarjeta para ver el detalle completo: ejercicios, series, repeticiones y descansos.",
+    },
+  ];
+
   // Grupo/tipo de cuerpo/nivel ya no se muestran como chips sueltos en la
   // pantalla — viven dentro del diálogo "Filtros" para no saturar de
   // botones (a petición del usuario). hasAnyFilters decide si ese botón
@@ -481,7 +553,7 @@ export default function EntrenamientosPage() {
     }
     return (
       <div className={styles.list}>
-        {filteredRoutines.map((routine) => (
+        {filteredRoutines.map((routine, index) => (
           <RoutineCard
             key={routine.id}
             title={routine.title}
@@ -491,6 +563,7 @@ export default function EntrenamientosPage() {
                 : `${routine.exercises.length} ejercicios`
             }
             onSelect={() => selectPackRoutine(routine)}
+            cardRef={index === 0 ? firstCardRef : undefined}
           />
         ))}
       </div>
@@ -506,6 +579,7 @@ export default function EntrenamientosPage() {
             type="button"
             className={styles.categoryButton}
             onClick={() => setCategoryPickerOpen(true)}
+            ref={categoryButtonRef}
           >
             <meta.icon size={14} />
             <span>{meta.label}</span>
@@ -520,6 +594,7 @@ export default function EntrenamientosPage() {
               size="sm"
               className={styles.filtersButton}
               onClick={() => setFiltersOpen(true)}
+              ref={filtersButtonRef}
             >
               <SlidersHorizontal size={14} />
               Filtros{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
@@ -533,7 +608,10 @@ export default function EntrenamientosPage() {
               size="sm"
               className={styles.newButton}
             >
-              <Link href={`/entrenamientos/crear?category=${activeCategory}`}>
+              <Link
+                href={`/entrenamientos/crear?category=${activeCategory}`}
+                ref={newButtonRef}
+              >
                 <Plus size={16} /> Nueva
               </Link>
             </Button>
@@ -548,7 +626,7 @@ export default function EntrenamientosPage() {
       ) : meta.mode === "catalog" ? (
         <>
         <Tabs defaultValue="rutinas" className={styles.tabs} key={activeCategory}>
-          <TabsList>
+          <TabsList ref={tabsListRef}>
             <TabsTrigger value="rutinas">
               Rutinas predeterminadas ({categoryRoutines.length})
             </TabsTrigger>
@@ -810,6 +888,14 @@ export default function EntrenamientosPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {tourOpen && (
+        <SpotlightTour
+          steps={tourSteps}
+          onFinish={handleTourFinish}
+          onNeverShowAgain={handleTourNeverShowAgain}
+        />
+      )}
     </div>
   );
 }
