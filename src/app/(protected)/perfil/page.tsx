@@ -16,6 +16,7 @@ import {
   Bell,
   BellOff,
   Pencil,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -397,33 +398,60 @@ export default function PerfilPage() {
 
       <div className={styles.evolutionSection} ref={evolutionSectionRef}>
         <div className={styles.evolutionHeader}>
-          <h2 className={styles.evolutionTitle}>Evolución física</h2>
+          <div className={styles.evolutionTitleRow}>
+            <h2 className={styles.evolutionTitle}>Evolución física</h2>
+            <span className={styles.evolutionCount}>
+              {slots.filter((s) => s.status === "taken").length}/{slots.length}
+            </span>
+          </div>
           <p className={styles.evolutionSubtitle}>
             Una foto el día 1, y luego una cada mes hasta completar el año.
           </p>
+          <div className={styles.privacyNote}>
+            <Lock size={12} />
+            <span>Privado — solo tú puedes ver estas fotos.</span>
+          </div>
         </div>
         <div className={styles.evolutionScroll}>
           {slots.map((slot) => {
             const isUploading =
               uploadPhoto.isPending && pendingMilestone === slot.index;
+            const daysLeft =
+              slot.status === "locked" && slot.unlocksAt
+                ? Math.max(
+                    0,
+                    Math.ceil(
+                      (slot.unlocksAt.getTime() - Date.now()) / 86_400_000,
+                    ),
+                  )
+                : null;
             return (
               <button
                 key={slot.index}
                 type="button"
                 className={`${styles.milestoneCard} ${
                   slot.status === "locked" ? styles.milestoneCardLocked : ""
-                }`}
+                } ${slot.status === "available" ? styles.milestoneCardAvailable : ""}`}
                 onClick={() => handleSlotClick(slot)}
                 disabled={isUploading}
               >
-                <div className={styles.milestoneThumb}>
+                <div
+                  className={`${styles.milestoneThumb} ${
+                    slot.status === "taken" ? styles.milestoneThumbTaken : ""
+                  }`}
+                >
                   {slot.status === "taken" && slot.photo?.url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={slot.photo.url}
-                      alt={slot.label}
-                      className={styles.milestoneImg}
-                    />
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={slot.photo.url}
+                        alt={slot.label}
+                        className={styles.milestoneImg}
+                      />
+                      <span className={styles.milestoneCheck}>
+                        <Check size={10} />
+                      </span>
+                    </>
                   ) : isUploading ? (
                     <Loader2 size={18} className={styles.milestoneSpinner} />
                   ) : slot.status === "locked" ? (
@@ -433,6 +461,11 @@ export default function PerfilPage() {
                   )}
                 </div>
                 <span className={styles.milestoneLabel}>{slot.label}</span>
+                {daysLeft !== null && (
+                  <span className={styles.milestoneCountdown}>
+                    {daysLeft === 0 ? "Mañana" : `${daysLeft}d`}
+                  </span>
+                )}
               </button>
             );
           })}

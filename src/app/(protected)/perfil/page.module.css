@@ -161,6 +161,22 @@
   gap: var(--spacing-1);
 }
 
+.evolutionTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+}
+
+.evolutionCount {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  padding: 0.15rem var(--spacing-2);
+  border-radius: var(--radius-full);
+}
+
 .evolutionTitle {
   margin: 0;
   font-family: var(--font-family-display);
@@ -173,6 +189,25 @@
   margin: 0;
   font-size: 0.78rem;
   color: var(--muted-foreground);
+}
+
+.privacyNote {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  margin-top: var(--spacing-1);
+  padding: var(--spacing-1) var(--spacing-2);
+  width: fit-content;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--muted-foreground) 8%, transparent);
+  border-radius: var(--radius-full);
+}
+
+.privacyNote svg {
+  color: var(--primary);
+  flex-shrink: 0;
 }
 
 .evolutionScroll {
@@ -209,6 +244,7 @@
 }
 
 .milestoneThumb {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -219,11 +255,38 @@
   border: 1px solid var(--border);
   color: var(--muted-foreground);
   overflow: hidden;
-  transition: border-color var(--animation-duration-fast) ease;
+  transition: border-color var(--animation-duration-fast) ease, transform var(--animation-duration-fast) ease;
 }
 
 .milestoneCard:hover .milestoneThumb {
   border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+  transform: translateY(-1px);
+}
+
+.milestoneThumbTaken {
+  border: 2px solid var(--primary);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 30%, transparent);
+}
+
+.milestoneCheck {
+  position: absolute;
+  bottom: 3px;
+  right: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: var(--radius-full);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border: 1.5px solid var(--card);
+}
+
+.milestoneCardAvailable .milestoneThumb {
+  border: 1.5px dashed color-mix(in srgb, var(--primary) 55%, var(--border));
+  background: color-mix(in srgb, var(--primary) 8%, var(--card));
+  color: var(--primary);
 }
 
 .milestoneCardLocked .milestoneThumb {
@@ -255,6 +318,14 @@
   font-size: 0.7rem;
   font-weight: 600;
   color: var(--muted-foreground);
+  white-space: nowrap;
+}
+
+.milestoneCountdown {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  opacity: 0.75;
   white-space: nowrap;
 }
 

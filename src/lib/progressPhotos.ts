@@ -1,5 +1,9 @@
 // Evolución física: una foto al día 1, y luego una por mes hasta el mes 12.
+// Cada milestone se desbloquea 30 días después de que se tomó la foto
+// ANTERIOR (no desde una fecha fija de día 1) — así, si te tardas más en
+// tomar una foto, el siguiente mes se recorre en vez de quedar huérfano.
 export const PROGRESS_MILESTONE_COUNT = 13; // índice 0 = Día 1, 1-12 = Mes 1..12
+const UNLOCK_DAYS = 30;
 
 export function milestoneLabel(index: number): string {
   return index === 0 ? "Día 1" : `Mes ${index}`;
@@ -9,11 +13,11 @@ export function milestoneShortLabel(index: number): string {
   return index === 0 ? "D1" : `M${index}`;
 }
 
-// Fecha en la que se desbloquea un milestone, contando desde la fecha de la
-// foto del Día 1 (milestone 0). El Día 1 siempre está desbloqueado.
-export function milestoneUnlockDate(day1Date: Date, index: number): Date {
-  const unlock = new Date(day1Date);
-  unlock.setMonth(unlock.getMonth() + index);
+// Fecha en la que se desbloquea el siguiente milestone: 30 días después de
+// la fecha en que se tomó la foto anterior.
+export function milestoneUnlockDate(previousPhotoDate: Date): Date {
+  const unlock = new Date(previousPhotoDate);
+  unlock.setDate(unlock.getDate() + UNLOCK_DAYS);
   return unlock;
 }
 
@@ -38,12 +42,11 @@ export type MilestoneSlot = {
 
 export function buildMilestoneSlots(photos: ProgressPhoto[]): MilestoneSlot[] {
   const byIndex = new Map(photos.map((p) => [p.milestoneIndex, p]));
-  const day1 = byIndex.get(0);
-  const day1Date = day1 ? new Date(`${day1.takenAt}T00:00:00`) : null;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   const slots: MilestoneSlot[] = [];
+
   for (let index = 0; index < PROGRESS_MILESTONE_COUNT; index++) {
     const photo = byIndex.get(index) ?? null;
     if (photo) {
@@ -54,11 +57,16 @@ export function buildMilestoneSlots(photos: ProgressPhoto[]): MilestoneSlot[] {
       slots.push({ index, label: milestoneLabel(index), status: "available", photo: null, unlocksAt: null });
       continue;
     }
-    if (!day1Date) {
+    // Un mes solo cuenta sus 30 días a partir de que se tomó la foto del
+    // mes inmediatamente anterior — si ese todavía no se tomó, este sigue
+    // bloqueado sin fecha de desbloqueo definida (no se puede saltar).
+    const previousPhoto = byIndex.get(index - 1);
+    if (!previousPhoto) {
       slots.push({ index, label: milestoneLabel(index), status: "locked", photo: null, unlocksAt: null });
       continue;
     }
-    const unlocksAt = milestoneUnlockDate(day1Date, index);
+    const previousTakenDate = new Date(`${previousPhoto.takenAt}T00:00:00`);
+    const unlocksAt = milestoneUnlockDate(previousTakenDate);
     const status = today >= unlocksAt ? "available" : "locked";
     slots.push({ index, label: milestoneLabel(index), status, photo: null, unlocksAt });
   }
