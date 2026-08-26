@@ -65,13 +65,14 @@ function muscleGroupsSummary(exercises: { muscleGroup: MuscleGroup }[]): string 
 }
 
 const LEVEL_LABEL: Record<string, string> = {
+  aprendiz: "Aprendiz",
   principiante: "Principiante",
   intermedio: "Intermedio",
   avanzado: "Avanzado",
   todos: "Todos los niveles",
 };
 
-const LEVEL_ORDER = ["principiante", "intermedio", "avanzado", "todos"];
+const LEVEL_ORDER = ["aprendiz", "principiante", "intermedio", "avanzado", "todos"];
 
 // Orden de despliegue de los botones de grupo/bloque para las categorías
 // donde el day_label realmente representa un grupo que se repite entre

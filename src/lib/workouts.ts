@@ -59,6 +59,7 @@ export function toEntrenamientosUiCategory(category: WorkoutCategory): string {
 }
 
 export const LEVEL_LABEL: Record<string, string> = {
+  aprendiz: "Aprendiz",
   principiante: "Principiante",
   intermedio: "Intermedio",
   avanzado: "Avanzado",
@@ -78,7 +79,7 @@ export type WorkoutExercise = {
 
 export type WorkoutRoutine = {
   id: string;
-  level: "principiante" | "intermedio" | "avanzado" | "todos";
+  level: "aprendiz" | "principiante" | "intermedio" | "avanzado" | "todos";
   splitType: "fullbody" | "ab" | "abc" | "grupo_muscular" | "sesion";
   category: WorkoutCategory;
   optionNumber: number;
