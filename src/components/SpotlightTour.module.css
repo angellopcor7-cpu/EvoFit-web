@@ -83,3 +83,14 @@
   flex-direction: column;
   gap: var(--spacing-2);
 }
+
+.neverShowButton {
+  width: 100%;
+  font-weight: 700;
+  box-shadow: 0 4px 16px rgba(228, 39, 46, 0.4);
+}
+
+.acceptButton {
+  width: 100%;
+  color: var(--muted-foreground);
+}

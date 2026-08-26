@@ -112,16 +112,23 @@ export function SpotlightTour({
           </Button>
         ) : (
           <div className={styles.finalActions}>
-            <Button type="button" size="sm" onClick={onFinish}>
-              Entendido
+            <Button
+              type="button"
+              size="lg"
+              variant="destructive"
+              className={styles.neverShowButton}
+              onClick={onNeverShowAgain}
+            >
+              No volver a enseñar
             </Button>
             <Button
               type="button"
               size="sm"
-              variant="outline"
-              onClick={onNeverShowAgain}
+              variant="ghost"
+              className={styles.acceptButton}
+              onClick={onFinish}
             >
-              No volver a enseñar
+              Entendido
             </Button>
           </div>
         )}
