@@ -3,6 +3,7 @@
 import { ReactNode, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SonnerToaster } from "./ui/SonnerToaster";
+import { ThemeProvider } from "./ThemeProvider";
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -17,9 +18,11 @@ export function Providers({ children }: { children: ReactNode }) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      {children}
-      <SonnerToaster />
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        {children}
+        <SonnerToaster />
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }

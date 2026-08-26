@@ -18,6 +18,9 @@ import {
   Pencil,
   Check,
   Fingerprint,
+  Sun,
+  Moon,
+  Monitor,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -53,6 +56,7 @@ import {
   registerDeviceLock,
   verifyDeviceLock,
 } from "@/lib/webauthnLock";
+import { useTheme, type ThemePreference } from "@/components/ThemeProvider";
 import { SpotlightTour, type TourStep } from "@/components/SpotlightTour";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useSendTestNotification } from "@/hooks/useNotifications";
@@ -101,6 +105,7 @@ export default function PerfilPage() {
   const resetProgressPhotos = useResetProgressPhotos();
   const markTutorialSeen = useMarkTutorialSeen("perfil");
   const updatePhotoAuthSettings = useUpdatePhotoAuthSettings();
+  const { theme, setTheme } = useTheme();
   const profile = data?.profile;
   const initial = profile?.displayName?.trim().charAt(0).toUpperCase() ?? "A";
 
@@ -723,6 +728,37 @@ export default function PerfilPage() {
             >
               {updateProfile.isPending ? "Guardando..." : "Guardar"}
             </Button>
+
+            <div className={styles.notificationsSection}>
+              <h3 className={styles.notificationsTitle}>Apariencia</h3>
+              <div className={styles.themeChipRow}>
+                {(
+                  [
+                    { value: "light", label: "Claro", icon: Sun },
+                    { value: "dark", label: "Oscuro", icon: Moon },
+                    { value: "system", label: "Automático", icon: Monitor },
+                  ] as { value: ThemePreference; label: string; icon: typeof Sun }[]
+                ).map((option) => {
+                  const Icon = option.icon;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      className={`${styles.themeChip} ${
+                        theme === option.value ? styles.themeChipActive : ""
+                      }`}
+                      onClick={() => setTheme(option.value)}
+                    >
+                      <Icon size={16} />
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className={styles.notificationRowHint}>
+                Automático usa el modo claro u oscuro de tu dispositivo.
+              </p>
+            </div>
 
             <div className={styles.notificationsSection}>
               <h3 className={styles.notificationsTitle}>Datos corporales</h3>

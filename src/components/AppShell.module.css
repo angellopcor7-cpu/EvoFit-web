@@ -7,8 +7,32 @@
   font-family: var(--font-family-base);
 }
 
+:global([data-theme="light"]) .shell {
+  background: radial-gradient(120% 60% at 50% -10%, #ffffff 0%, var(--background) 55%), var(--background);
+}
+
+/* Escritorio: deja espacio a la izquierda para el menú lateral fijo (ver
+   --sidebar-width en BottomNav.module.css). */
+@media (min-width: 880px) {
+  .shell {
+    padding-left: 15rem;
+  }
+}
+
 .content {
   flex: 1;
   padding: var(--spacing-6) var(--spacing-4)
     calc(5.25rem + env(safe-area-inset-bottom)) var(--spacing-4);
+}
+
+/* Escritorio: la barra inferior se convierte en menú lateral (ver
+   BottomNav.module.css), así que el contenido ya no necesita el espacio
+   extra abajo, y se centra en una columna cómoda de leer en vez de
+   estirarse a todo el ancho de un monitor. */
+@media (min-width: 880px) {
+  .content {
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: var(--spacing-8) var(--spacing-6) var(--spacing-8) var(--spacing-6);
+  }
 }

@@ -77,6 +77,54 @@
   color-scheme: dark;
 }
 
+/* Modo claro — mismo acento rojo/violeta, fondo e superficies claras */
+:root[data-theme="light"] {
+  --background: #f7f6f8;
+  --foreground: #17151c;
+
+  --surface: #ffffff;
+  --surface-foreground: #17151c;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #17151c;
+
+  --card: #ffffff;
+  --card-foreground: #17151c;
+
+  --popup: #ffffff;
+  --popup-foreground: #17151c;
+
+  --primary: #e4272e;
+  --primary-foreground: #ffffff;
+
+  --secondary: #7c5cff;
+  --secondary-foreground: #ffffff;
+
+  --accent: #ff5c8a;
+  --accent-foreground: #ffffff;
+
+  --muted: #efeef2;
+  --muted-foreground: #6b6975;
+
+  --success: #0f9d68;
+  --success-foreground: #ffffff;
+  --error: #d92d2f;
+  --error-foreground: #ffffff;
+  --warning: #b45309;
+  --warning-foreground: #ffffff;
+  --info: #0284c7;
+  --info-foreground: #ffffff;
+
+  --border: rgba(23, 21, 28, 0.1);
+
+  --shadow: 0 1px 2px rgba(23, 21, 28, 0.06);
+  --shadow-md: 0 4px 20px rgba(23, 21, 28, 0.08);
+  --shadow-lg: 0 16px 48px rgba(23, 21, 28, 0.12);
+  --shadow-focus: 0 0 0 3px rgba(228, 39, 46, 0.25);
+
+  color-scheme: light;
+}
+
 html {
   height: 100%;
 }
