@@ -59,7 +59,17 @@ const LEVEL_ORDER = ["principiante", "intermedio", "avanzado", "todos"];
 // niveles (musculación y calistenia). El resto de categorías (sesiones
 // tipo clase) no usan este filtro porque cada day_label ahí es único.
 const GROUP_ORDER: Partial<Record<UiCategory, string[]>> = {
-  musculacion: ["Full Body", "Pecho", "Espalda", "Piernas", "Hombros", "Brazos", "Abdomen"],
+  musculacion: [
+    "Full Body",
+    "Empuje",
+    "Tirón",
+    "Piernas",
+    "Pecho",
+    "Espalda",
+    "Hombros",
+    "Brazos",
+    "Abdomen",
+  ],
   calistenia: ["Full Body A", "Full Body B", "Tren superior", "Tren inferior y core"],
 };
 
