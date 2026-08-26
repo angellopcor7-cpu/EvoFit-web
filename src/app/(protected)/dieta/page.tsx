@@ -5,7 +5,6 @@ import Link from "next/link";
 import { ArrowLeft, RefreshCw, Flame, Beef, Wheat, Droplet, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { Spinner } from "@/components/ui/Spinner";
 import {
   Select,
@@ -34,29 +33,32 @@ import {
 import {
   ACTIVITY_LEVELS,
   ACTIVITY_LEVEL_LABEL,
-  SEX_OPTIONS,
   type ActivityLevel,
-  type Sex,
+  type Sex as DietSex,
 } from "@/lib/dietCalculations";
 import styles from "./page.module.css";
 
-type Step = "meta" | "datos" | "resultado";
+type Step = "meta" | "resultado";
+
+// Los datos corporales del onboarding usan hombre/mujer/no_binario; los
+// cálculos de macros de dieta usan masculino/femenino. "no_binario" se
+// aproxima con la fórmula masculina, que es el estimador neutro más común.
+function toDietSex(sex: "hombre" | "mujer" | "no_binario"): DietSex {
+  return sex === "mujer" ? "femenino" : "masculino";
+}
 
 export default function DietaPage() {
   const { data, isLoading } = useDietPlan();
   const { data: sessionData } = useAuthSession();
   const createPlan = useCreateDietPlan();
   const regeneratePlan = useRegenerateDietPlan();
-  const allergies = sessionData?.profile?.allergies?.trim() || null;
+  const profile = sessionData?.profile ?? null;
+  const allergies = profile?.allergies?.trim() || null;
 
   const [step, setStep] = useState<Step | null>(null);
   const [goal, setGoal] = useState<DietGoal | null>(null);
   const [dietStyle, setDietStyle] = useState<DietStyle | null>(null);
   const [budget, setBudget] = useState<DietBudget | null>(null);
-  const [sex, setSex] = useState<Sex>("masculino");
-  const [age, setAge] = useState("28");
-  const [heightCm, setHeightCm] = useState("170");
-  const [weightKg, setWeightKg] = useState("70");
   const [activityLevel, setActivityLevel] = useState<ActivityLevel>("moderado");
   const [proteinPreferences, setProteinPreferences] = useState<DietProteinType[]>([]);
 
@@ -85,7 +87,7 @@ export default function DietaPage() {
     );
   };
 
-  const handleContinueFromMeta = () => {
+  const handleCreatePlan = () => {
     if (!goal) {
       toast.error("Elige una meta");
       return;
@@ -98,19 +100,10 @@ export default function DietaPage() {
       toast.error("Elige tu presupuesto");
       return;
     }
-    setStep("datos");
-  };
-
-  const handleCreatePlan = () => {
-    if (!goal || !dietStyle || !budget) {
-      setStep("meta");
-      return;
-    }
-    const ageNum = Number(age);
-    const heightNum = Number(heightCm);
-    const weightNum = Number(weightKg);
-    if (!ageNum || !heightNum || !weightNum) {
-      toast.error("Revisa tus datos: edad, estatura y peso");
+    if (!profile?.age || !profile?.heightCm || !profile?.weightKg || !profile?.sex) {
+      toast.error(
+        "Nos faltan tus datos corporales. Complétalos en Perfil → Editar perfil → Datos corporales.",
+      );
       return;
     }
 
@@ -119,10 +112,10 @@ export default function DietaPage() {
         goal,
         dietStyle,
         budget,
-        sex,
-        age: ageNum,
-        heightCm: heightNum,
-        weightKg: weightNum,
+        sex: toDietSex(profile.sex),
+        age: profile.age,
+        heightCm: profile.heightCm,
+        weightKg: profile.weightKg,
         activityLevel,
         proteinPreferences,
       },
@@ -176,7 +169,6 @@ export default function DietaPage() {
         </Button>
         <h1 className={styles.title}>
           {step === "meta" && "Arma tu dieta"}
-          {step === "datos" && "Tus datos"}
           {step === "resultado" && "Tu plan"}
         </h1>
         <div className={styles.headerSpacer} />
@@ -226,60 +218,6 @@ export default function DietaPage() {
             ))}
           </div>
 
-          <Button type="button" className={styles.primaryButton} onClick={handleContinueFromMeta}>
-            Continuar
-          </Button>
-        </div>
-      )}
-
-      {step === "datos" && (
-        <div className={styles.stepContent}>
-          <div className={styles.fieldRow}>
-            <span className={styles.fieldLabel}>Sexo</span>
-            <div className={styles.chipGrid}>
-              {SEX_OPTIONS.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  className={`${styles.chip} ${sex === option ? styles.chipActive : ""}`}
-                  onClick={() => setSex(option)}
-                >
-                  {option === "masculino" ? "Masculino" : "Femenino"}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className={styles.dataGrid}>
-            <div className={styles.fieldRow}>
-              <span className={styles.fieldLabel}>Edad</span>
-              <Input
-                type="number"
-                inputMode="numeric"
-                value={age}
-                onChange={(e) => setAge(e.target.value)}
-              />
-            </div>
-            <div className={styles.fieldRow}>
-              <span className={styles.fieldLabel}>Estatura (cm)</span>
-              <Input
-                type="number"
-                inputMode="numeric"
-                value={heightCm}
-                onChange={(e) => setHeightCm(e.target.value)}
-              />
-            </div>
-            <div className={styles.fieldRow}>
-              <span className={styles.fieldLabel}>Peso (kg)</span>
-              <Input
-                type="number"
-                inputMode="numeric"
-                value={weightKg}
-                onChange={(e) => setWeightKg(e.target.value)}
-              />
-            </div>
-          </div>
-
           <div className={styles.fieldRow}>
             <span className={styles.fieldLabel}>Nivel de actividad</span>
             <Select
@@ -316,6 +254,11 @@ export default function DietaPage() {
               ))}
             </div>
           </div>
+
+          <p className={styles.hint}>
+            Usamos tu peso, estatura, edad y sexo ya registrados en tu perfil para
+            calcular tus macros.
+          </p>
 
           <Button
             type="button"
