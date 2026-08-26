@@ -78,3 +78,42 @@ export const useUploadProgressPhoto = () => {
     },
   });
 };
+
+// Borra todas las fotos de evolución física (fila en la tabla + archivo en
+// Storage) para volver a empezar desde el Día 1 — solo esta sección, no
+// toca rachas, dieta ni rutinas.
+export const useResetProgressPhotos = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (): Promise<void> => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("No autenticado");
+
+      const { data: rows, error: fetchError } = await supabase
+        .from("progress_photos")
+        .select("storage_path")
+        .eq("user_id", user.id);
+      if (fetchError) throw new Error(fetchError.message);
+
+      const paths = (rows ?? []).map((r) => r.storage_path as string);
+      if (paths.length > 0) {
+        const { error: removeError } = await supabase.storage
+          .from(BUCKET)
+          .remove(paths);
+        if (removeError) throw new Error(removeError.message);
+      }
+
+      const { error: deleteError } = await supabase
+        .from("progress_photos")
+        .delete()
+        .eq("user_id", user.id);
+      if (deleteError) throw new Error(deleteError.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+    },
+  });
+};

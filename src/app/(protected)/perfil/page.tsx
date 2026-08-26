@@ -59,7 +59,11 @@ import { useSendTestNotification } from "@/hooks/useNotifications";
 import { useLogout } from "@/hooks/useAuthActions";
 import { useResetProgress } from "@/hooks/useResetProgress";
 import { useWorkoutStats } from "@/hooks/useWorkoutCompletions";
-import { useProgressPhotos, useUploadProgressPhoto } from "@/hooks/useProgressPhotos";
+import {
+  useProgressPhotos,
+  useUploadProgressPhoto,
+  useResetProgressPhotos,
+} from "@/hooks/useProgressPhotos";
 import {
   buildMilestoneSlots,
   formatShortDate,
@@ -94,6 +98,7 @@ export default function PerfilPage() {
   const { data: stats } = useWorkoutStats();
   const { data: photosData } = useProgressPhotos();
   const uploadPhoto = useUploadProgressPhoto();
+  const resetProgressPhotos = useResetProgressPhotos();
   const markTutorialSeen = useMarkTutorialSeen("perfil");
   const updatePhotoAuthSettings = useUpdatePhotoAuthSettings();
   const profile = data?.profile;
@@ -110,6 +115,7 @@ export default function PerfilPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [editName, setEditName] = useState("");
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [resetPhotosConfirmOpen, setResetPhotosConfirmOpen] = useState(false);
   const [bodyDataEditing, setBodyDataEditing] = useState(false);
   const [bodyData, setBodyData] = useState<BodyDataFormValue>(emptyBodyDataFormValue());
   const [tourOpen, setTourOpen] = useState(false);
@@ -212,6 +218,19 @@ export default function PerfilPage() {
       onError: (error) =>
         toast.error(
           error instanceof Error ? error.message : "No se pudo reiniciar tu progreso",
+        ),
+    });
+  };
+
+  const handleResetProgressPhotos = () => {
+    resetProgressPhotos.mutate(undefined, {
+      onSuccess: () => {
+        toast.success("Fotos de evolución reiniciadas");
+        setResetPhotosConfirmOpen(false);
+      },
+      onError: (error) =>
+        toast.error(
+          error instanceof Error ? error.message : "No se pudieron reiniciar las fotos",
         ),
     });
   };
@@ -808,6 +827,14 @@ export default function PerfilPage() {
                   disabled={photoAuthBusy || updatePhotoAuthSettings.isPending}
                 />
               </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setResetPhotosConfirmOpen(true)}
+              >
+                <RotateCcw size={14} /> Reiniciar fotos de evolución
+              </Button>
             </div>
 
             <div className={styles.notificationsSection}>
@@ -891,6 +918,42 @@ export default function PerfilPage() {
                 <RotateCcw size={14} /> Reiniciar progreso
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={resetPhotosConfirmOpen} onOpenChange={setResetPhotosConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className={styles.resetWarningTitle}>
+              <AlertTriangle size={18} /> Reiniciar fotos de evolución
+            </DialogTitle>
+            <DialogDescription>
+              Esto va a borrar todas tus fotos de evolución física (Día 1 y
+              los meses que hayas subido) para que empieces de nuevo desde
+              cero. No se puede deshacer. No afecta tu racha, dieta, rutinas
+              ni metas.
+            </DialogDescription>
+          </DialogHeader>
+          <div className={styles.editForm}>
+            <Button
+              type="button"
+              variant="destructive"
+              className={styles.saveProfileButton}
+              onClick={handleResetProgressPhotos}
+              disabled={resetProgressPhotos.isPending}
+            >
+              {resetProgressPhotos.isPending ? "Reiniciando..." : "Sí, borrar mis fotos"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className={styles.saveProfileButton}
+              onClick={() => setResetPhotosConfirmOpen(false)}
+              disabled={resetProgressPhotos.isPending}
+            >
+              Cancelar
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
