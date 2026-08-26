@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Flame,
@@ -12,7 +13,11 @@ import {
   CalendarDays,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { useAuthSession } from "@/hooks/useProfile";
+import {
+  useAuthSession,
+  useMarkHomeTutorialSeen,
+} from "@/hooks/useProfile";
+import { SpotlightTour, type TourStep } from "@/components/SpotlightTour";
 import { useDietPlan } from "@/hooks/useDietPlan";
 import { useWorkoutStats } from "@/hooks/useWorkoutCompletions";
 import { useWeeklyPlan } from "@/hooks/useWeeklyPlan";
@@ -34,12 +39,20 @@ function todayStr(): string {
 export default function HomePage() {
   const { data } = useAuthSession();
   const profile = data?.profile;
+  const markHomeTutorialSeen = useMarkHomeTutorialSeen();
   const { data: dietData } = useDietPlan();
   const dietPlan = dietData?.plan ?? null;
   const { data: stats } = useWorkoutStats();
   const { data: planData } = useWeeklyPlan();
   const { data: routinesData } = useWorkoutRoutines();
   const { data: userRoutinesData } = useUserRoutines();
+
+  const [tourOpen, setTourOpen] = useState(false);
+  const [tourDismissedThisVisit, setTourDismissedThisVisit] = useState(false);
+  const statsCardRef = useRef<HTMLDivElement>(null);
+  const ctaCardRef = useRef<HTMLDivElement>(null);
+  const planLinkRef = useRef<HTMLAnchorElement>(null);
+  const dietCardRef = useRef<HTMLAnchorElement>(null);
 
   const trainedToday = profile?.lastActiveDate === todayStr();
 
@@ -69,6 +82,52 @@ export default function HomePage() {
     : Infinity;
   const showMotivation = !trainedToday && daysSinceLastActive >= 2;
 
+  useEffect(() => {
+    if (!profile) return;
+    if (profile.hasSeenHomeTutorial) return;
+    if (tourDismissedThisVisit) return;
+    const timeout = setTimeout(() => setTourOpen(true), 300);
+    return () => clearTimeout(timeout);
+  }, [profile, tourDismissedThisVisit]);
+
+  const closeTour = () => {
+    setTourOpen(false);
+    setTourDismissedThisVisit(true);
+  };
+
+  const handleTourFinish = () => closeTour();
+  const handleTourNeverShowAgain = () => {
+    closeTour();
+    markHomeTutorialSeen.mutate();
+  };
+
+  const tourSteps: TourStep[] = [
+    {
+      ref: statsCardRef,
+      title: "Tu racha de entrenos",
+      description:
+        "Aquí ves tu racha actual, tu mejor racha y el total de entrenamientos que has completado.",
+    },
+    {
+      ref: ctaCardRef,
+      title: "Lo que te toca hoy",
+      description:
+        "Esta tarjeta te dice qué te toca entrenar hoy según tu plan semanal, o te deja empezar directo.",
+    },
+    {
+      ref: planLinkRef,
+      title: "Tu plan semanal",
+      description:
+        "Aquí armas o editas qué rutina te toca cada día de la semana, para que aparezca aquí automáticamente.",
+    },
+    {
+      ref: dietCardRef,
+      title: "Tu nutrición",
+      description:
+        "Aquí armas tu plan de alimentación o revisas tu menú y macros del día.",
+    },
+  ];
+
   return (
     <div className={styles.page}>
       <div>
@@ -76,7 +135,7 @@ export default function HomePage() {
         <h1 className={styles.name}>{profile?.displayName ?? "Atleta"}</h1>
       </div>
 
-      <div className={styles.statsCard}>
+      <div className={styles.statsCard} ref={statsCardRef}>
         <div className={styles.stat}>
           <Flame size={18} className={styles.statIconStreak} />
           <span className={styles.statValue}>
@@ -107,7 +166,7 @@ export default function HomePage() {
         </div>
       )}
 
-      <div className={styles.ctaCard}>
+      <div className={styles.ctaCard} ref={ctaCardRef}>
         <div>
           <p className={styles.ctaEyebrow}>Hoy</p>
           {trainedToday ? (
@@ -187,7 +246,7 @@ export default function HomePage() {
         </div>
       )}
 
-      <Link href="/plan" className={styles.planLink}>
+      <Link href="/plan" className={styles.planLink} ref={planLinkRef}>
         <CalendarDays size={14} />
         {hasAnyPlan ? "Editar tu plan semanal" : "Arma tu plan semanal"}
       </Link>
@@ -196,7 +255,7 @@ export default function HomePage() {
         Cada entrenamiento que completes mantiene tu racha viva.
       </p>
 
-      <Link href="/dieta" className={styles.dietCard}>
+      <Link href="/dieta" className={styles.dietCard} ref={dietCardRef}>
         <div className={styles.dietCardIcon}>
           {dietPlan ? <RefreshCw size={22} /> : <Utensils size={22} />}
         </div>
@@ -222,6 +281,14 @@ export default function HomePage() {
         </div>
         <ArrowRight size={18} className={styles.dietCardArrow} />
       </Link>
+
+      {tourOpen && (
+        <SpotlightTour
+          steps={tourSteps}
+          onFinish={handleTourFinish}
+          onNeverShowAgain={handleTourNeverShowAgain}
+        />
+      )}
     </div>
   );
 }

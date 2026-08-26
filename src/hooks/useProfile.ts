@@ -42,6 +42,7 @@ export type Profile = {
   lastActiveDate: string | null;
   hasSeenWelcome: boolean;
   hasSeenWorkoutsTutorial: boolean;
+  hasSeenHomeTutorial: boolean;
   weightKg: number | null;
   heightCm: number | null;
   age: number | null;
@@ -65,6 +66,7 @@ type ProfileRow = {
   last_active_date: string | null;
   has_seen_welcome: boolean;
   has_seen_workouts_tutorial: boolean;
+  has_seen_home_tutorial: boolean;
   weight_kg: number | null;
   height_cm: number | null;
   age: number | null;
@@ -89,6 +91,7 @@ function mapProfile(row: ProfileRow): Profile {
     lastActiveDate: row.last_active_date,
     hasSeenWelcome: row.has_seen_welcome,
     hasSeenWorkoutsTutorial: row.has_seen_workouts_tutorial,
+    hasSeenHomeTutorial: row.has_seen_home_tutorial,
     weightKg: row.weight_kg,
     heightCm: row.height_cm,
     age: row.age,
@@ -191,6 +194,28 @@ export const useMarkWorkoutsTutorialSeen = () => {
       const { error } = await supabase
         .from("profiles")
         .update({ has_seen_workouts_tutorial: true })
+        .eq("id", user.id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["auth", "session"] });
+    },
+  });
+};
+
+export const useMarkHomeTutorialSeen = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (): Promise<void> => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("No autenticado");
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({ has_seen_home_tutorial: true })
         .eq("id", user.id);
       if (error) throw new Error(error.message);
     },
