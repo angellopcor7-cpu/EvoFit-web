@@ -17,6 +17,7 @@ import {
   BellOff,
   Pencil,
   Check,
+  Fingerprint,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -42,10 +43,16 @@ import {
   useUpdateNotificationPreferences,
   useSaveBodyProfile,
   useMarkTutorialSeen,
+  useUpdatePhotoAuthSettings,
   BODY_TYPE_LABEL,
   SEX_LABEL,
   type Profile,
 } from "@/hooks/useProfile";
+import {
+  isPlatformAuthenticatorAvailable,
+  registerDeviceLock,
+  verifyDeviceLock,
+} from "@/lib/webauthnLock";
 import { SpotlightTour, type TourStep } from "@/components/SpotlightTour";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useSendTestNotification } from "@/hooks/useNotifications";
@@ -88,6 +95,7 @@ export default function PerfilPage() {
   const { data: photosData } = useProgressPhotos();
   const uploadPhoto = useUploadProgressPhoto();
   const markTutorialSeen = useMarkTutorialSeen("perfil");
+  const updatePhotoAuthSettings = useUpdatePhotoAuthSettings();
   const profile = data?.profile;
   const initial = profile?.displayName?.trim().charAt(0).toUpperCase() ?? "A";
 
@@ -106,6 +114,8 @@ export default function PerfilPage() {
   const [bodyData, setBodyData] = useState<BodyDataFormValue>(emptyBodyDataFormValue());
   const [tourOpen, setTourOpen] = useState(false);
   const [tourDismissedThisVisit, setTourDismissedThisVisit] = useState(false);
+  const [photoAuthBusy, setPhotoAuthBusy] = useState(false);
+  const [verifyingSlotIndex, setVerifyingSlotIndex] = useState<number | null>(null);
   const editButtonRef = useRef<HTMLButtonElement>(null);
   const statsCardRef = useRef<HTMLDivElement>(null);
   const evolutionSectionRef = useRef<HTMLDivElement>(null);
@@ -292,8 +302,17 @@ export default function PerfilPage() {
     },
   ];
 
-  const handleSlotClick = (slot: MilestoneSlot) => {
+  const handleSlotClick = async (slot: MilestoneSlot) => {
     if (slot.status === "taken") {
+      if (profile?.requirePhotoAuth && profile.photoAuthCredentialId) {
+        setVerifyingSlotIndex(slot.index);
+        const verified = await verifyDeviceLock(profile.photoAuthCredentialId);
+        setVerifyingSlotIndex(null);
+        if (!verified) {
+          toast.error("No se pudo verificar tu identidad");
+          return;
+        }
+      }
       setViewingSlot(slot);
       return;
     }
@@ -306,6 +325,42 @@ export default function PerfilPage() {
       return;
     }
     setPickerSlot(slot);
+  };
+
+  const handleTogglePhotoAuth = async (checked: boolean) => {
+    if (!checked) {
+      updatePhotoAuthSettings.mutate(
+        { requirePhotoAuth: false },
+        { onError: () => toast.error("No se pudo actualizar") },
+      );
+      return;
+    }
+    if (!profile) return;
+    const available = await isPlatformAuthenticatorAvailable();
+    if (!available) {
+      toast.error(
+        "Tu dispositivo o navegador no soporta huella, rostro o PIN para esto",
+      );
+      return;
+    }
+    setPhotoAuthBusy(true);
+    try {
+      const credentialId = await registerDeviceLock(
+        profile.id,
+        profile.displayName,
+      );
+      updatePhotoAuthSettings.mutate(
+        { requirePhotoAuth: true, credentialId },
+        {
+          onSuccess: () => toast.success("Seguridad máxima activada"),
+          onError: () => toast.error("No se pudo activar"),
+        },
+      );
+    } catch {
+      toast.error("Cancelaste la verificación — no se activó");
+    } finally {
+      setPhotoAuthBusy(false);
+    }
   };
 
   const handleTakePhoto = () => {
@@ -446,8 +501,21 @@ export default function PerfilPage() {
                       <img
                         src={slot.photo.url}
                         alt={slot.label}
-                        className={styles.milestoneImg}
+                        className={
+                          profile?.requirePhotoAuth
+                            ? `${styles.milestoneImg} ${styles.milestoneImgBlurred}`
+                            : styles.milestoneImg
+                        }
                       />
+                      {profile?.requirePhotoAuth && (
+                        <span className={styles.milestoneLockOverlay}>
+                          {verifyingSlotIndex === slot.index ? (
+                            <Loader2 size={16} className={styles.milestoneSpinner} />
+                          ) : (
+                            <Fingerprint size={16} />
+                          )}
+                        </span>
+                      )}
                       <span className={styles.milestoneCheck}>
                         <Check size={10} />
                       </span>
@@ -720,6 +788,26 @@ export default function PerfilPage() {
                   </Button>
                 </>
               )}
+            </div>
+
+            <div className={styles.notificationsSection}>
+              <h3 className={styles.notificationsTitle}>Seguridad</h3>
+              <div className={styles.notificationRow}>
+                <div className={styles.notificationRowText}>
+                  <span className={styles.notificationRowLabel}>
+                    Seguridad máxima para fotos
+                  </span>
+                  <span className={styles.notificationRowHint}>
+                    Pide tu huella, rostro o la contraseña del dispositivo
+                    para ver cada foto de evolución física
+                  </span>
+                </div>
+                <Switch
+                  checked={profile?.requirePhotoAuth ?? false}
+                  onCheckedChange={handleTogglePhotoAuth}
+                  disabled={photoAuthBusy || updatePhotoAuthSettings.isPending}
+                />
+              </div>
             </div>
 
             <div className={styles.notificationsSection}>

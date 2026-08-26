@@ -56,6 +56,8 @@ export type Profile = {
   hasCompletedOnboarding: boolean;
   notifyWorkoutReminder: boolean;
   notifyDietReminder: boolean;
+  requirePhotoAuth: boolean;
+  photoAuthCredentialId: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -83,6 +85,8 @@ type ProfileRow = {
   has_completed_onboarding: boolean;
   notify_workout_reminder: boolean;
   notify_diet_reminder: boolean;
+  require_photo_auth: boolean;
+  photo_auth_credential_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -111,6 +115,8 @@ function mapProfile(row: ProfileRow): Profile {
     hasCompletedOnboarding: row.has_completed_onboarding,
     notifyWorkoutReminder: row.notify_workout_reminder,
     notifyDietReminder: row.notify_diet_reminder,
+    requirePhotoAuth: row.require_photo_auth,
+    photoAuthCredentialId: row.photo_auth_credential_id,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -362,6 +368,42 @@ export const useUpdateNotificationPreferences = () => {
       }
       if (input.notifyDietReminder !== undefined) {
         update.notify_diet_reminder = input.notifyDietReminder;
+      }
+
+      const { error } = await supabase
+        .from("profiles")
+        .update(update)
+        .eq("id", user.id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["auth", "session"] });
+    },
+  });
+};
+
+// Activa/desactiva el bloqueo biométrico local para las fotos de
+// evolución física. Al activar, guarda el credential id ya registrado
+// con WebAuthn (huella/rostro/PIN del dispositivo). Al desactivar, solo
+// apaga el flag — no borra el credential por si se vuelve a activar.
+export const useUpdatePhotoAuthSettings = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      requirePhotoAuth: boolean;
+      credentialId?: string;
+    }): Promise<void> => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("No autenticado");
+
+      const update: Record<string, boolean | string> = {
+        require_photo_auth: input.requirePhotoAuth,
+      };
+      if (input.credentialId) {
+        update.photo_auth_credential_id = input.credentialId;
       }
 
       const { error } = await supabase
