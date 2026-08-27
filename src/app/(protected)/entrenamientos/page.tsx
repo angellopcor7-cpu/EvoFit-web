@@ -12,7 +12,7 @@ import {
   Wind,
   Swords,
   Layers,
-  Shuffle,
+  Home,
   Plus,
   Play,
   Timer,
@@ -138,7 +138,7 @@ const UI_CATEGORY_META: Record<
   yoga_pilates: { label: "Yoga / Pilates", icon: Wind, mode: "sessions", workoutCategory: "yoga_pilates" },
   boxeo_kickboxing: { label: "Boxeo / Kickbox", icon: Swords, mode: "sessions", workoutCategory: "boxeo_kickboxing" },
   equipo_especial: { label: "Equipo especial", icon: Layers, mode: "sessions", workoutCategory: "equipo_especial" },
-  hibrido: { label: "Híbridos", icon: Shuffle, mode: "sessions", workoutCategory: "hibrido" },
+  hibrido: { label: "Ejercicio en casa", icon: Home, mode: "catalog", workoutCategory: "hibrido" },
 };
 
 function parseUiCategory(value: string | null): UiCategory {
