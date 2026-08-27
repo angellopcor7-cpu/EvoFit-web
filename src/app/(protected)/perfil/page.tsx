@@ -61,7 +61,7 @@ import { SpotlightTour, type TourStep } from "@/components/SpotlightTour";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useSendTestNotification } from "@/hooks/useNotifications";
 import { useLogout } from "@/hooks/useAuthActions";
-import { useResetProgress } from "@/hooks/useResetProgress";
+import { useResetProgress, useResetEverything } from "@/hooks/useResetProgress";
 import { useWorkoutStats } from "@/hooks/useWorkoutCompletions";
 import {
   useProgressPhotos,
@@ -95,6 +95,7 @@ export default function PerfilPage() {
   const updateProfile = useUpdateProfile();
   const uploadAvatar = useUploadAvatar();
   const resetProgress = useResetProgress();
+  const resetEverything = useResetEverything();
   const saveBodyProfile = useSaveBodyProfile();
   const updateNotificationPrefs = useUpdateNotificationPreferences();
   const push = usePushNotifications();
@@ -121,6 +122,8 @@ export default function PerfilPage() {
   const [editName, setEditName] = useState("");
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [resetPhotosConfirmOpen, setResetPhotosConfirmOpen] = useState(false);
+  const [resetAllConfirmOpen, setResetAllConfirmOpen] = useState(false);
+  const [resetAllConfirmText, setResetAllConfirmText] = useState("");
   const [bodyDataEditing, setBodyDataEditing] = useState(false);
   const [bodyData, setBodyData] = useState<BodyDataFormValue>(emptyBodyDataFormValue());
   const [tourOpen, setTourOpen] = useState(false);
@@ -236,6 +239,26 @@ export default function PerfilPage() {
       onError: (error) =>
         toast.error(
           error instanceof Error ? error.message : "No se pudieron reiniciar las fotos",
+        ),
+    });
+  };
+
+  const RESET_ALL_PHRASE = "BORRAR TODO";
+
+  const handleResetEverything = () => {
+    if (resetAllConfirmText.trim().toUpperCase() !== RESET_ALL_PHRASE) return;
+    resetEverything.mutate(undefined, {
+      onSuccess: () => {
+        toast.success("Tu cuenta se reinició por completo");
+        setResetAllConfirmOpen(false);
+        setEditOpen(false);
+        // Recarga completa para que el onboarding y los tutoriales
+        // arranquen desde cero, como con una cuenta nueva.
+        window.location.href = "/home";
+      },
+      onError: (error) =>
+        toast.error(
+          error instanceof Error ? error.message : "No se pudo reiniciar tu cuenta",
         ),
     });
   };
@@ -953,7 +976,81 @@ export default function PerfilPage() {
               >
                 <RotateCcw size={14} /> Reiniciar progreso
               </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                className={styles.resetEverythingButton}
+                onClick={() => {
+                  setResetAllConfirmText("");
+                  setResetAllConfirmOpen(true);
+                }}
+              >
+                <AlertTriangle size={14} /> Reiniciar TODO por completo
+              </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={resetAllConfirmOpen} onOpenChange={setResetAllConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className={styles.resetWarningTitle}>
+              <AlertTriangle size={20} /> Esto borra TODO — no se puede deshacer
+            </DialogTitle>
+            <DialogDescription>
+              Vas a reiniciar tu cuenta de EvoFit por completo, como si te
+              acabaras de registrar. Esto incluye:
+            </DialogDescription>
+          </DialogHeader>
+          <ul className={styles.resetAllList}>
+            <li>Racha, mejor racha e historial de entrenamientos</li>
+            <li>Tu dieta y plan de alimentación</li>
+            <li>Tus rutinas propias y tu plan semanal</li>
+            <li>Tus metas</li>
+            <li>Todas tus fotos de evolución física</li>
+            <li>Tu foto de perfil</li>
+            <li>Tus datos corporales (peso, estatura, edad, tipo de cuerpo, alergias)</li>
+            <li>El bloqueo biométrico de fotos, si lo activaste</li>
+            <li>Todos los tutoriales — volverán a aparecer como la primera vez</li>
+          </ul>
+          <p className={styles.resetAllWarning}>
+            No hay forma de recuperar esta información después. Tu correo y
+            contraseña de acceso NO se borran.
+          </p>
+          <p className={styles.resetAllInstruction}>
+            Para confirmar, escribe <strong>BORRAR TODO</strong> abajo:
+          </p>
+          <Input
+            value={resetAllConfirmText}
+            onChange={(e) => setResetAllConfirmText(e.target.value)}
+            placeholder="BORRAR TODO"
+            autoComplete="off"
+          />
+          <div className={styles.editForm}>
+            <Button
+              type="button"
+              variant="destructive"
+              className={styles.saveProfileButton}
+              onClick={handleResetEverything}
+              disabled={
+                resetAllConfirmText.trim().toUpperCase() !== RESET_ALL_PHRASE ||
+                resetEverything.isPending
+              }
+            >
+              {resetEverything.isPending
+                ? "Borrando todo..."
+                : "Sí, borrar todo permanentemente"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className={styles.saveProfileButton}
+              onClick={() => setResetAllConfirmOpen(false)}
+              disabled={resetEverything.isPending}
+            >
+              Cancelar
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

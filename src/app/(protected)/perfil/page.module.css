@@ -449,6 +449,9 @@
   margin-top: var(--spacing-2);
   padding-top: var(--spacing-3);
   border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
 }
 
 .resetProgressButton {
@@ -500,4 +503,42 @@
   border-color: var(--primary);
   color: var(--primary);
   background: color-mix(in srgb, var(--primary) 10%, var(--surface));
+}
+
+.resetEverythingButton {
+  width: 100%;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-1);
+  font-weight: 700;
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--error) 35%, transparent);
+}
+
+.resetAllList {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  font-size: 0.82rem;
+  color: var(--foreground);
+}
+
+.resetAllWarning {
+  margin: 0;
+  padding: var(--spacing-2) var(--spacing-3);
+  background: color-mix(in srgb, var(--error) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--error) 35%, transparent);
+  border-radius: var(--radius-md);
+  color: var(--error);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.resetAllInstruction {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--muted-foreground);
 }
