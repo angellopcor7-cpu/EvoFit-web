@@ -9,6 +9,7 @@ export type Goal = {
   currentValue: number;
   targetDate: string | null;
   createdAt: string;
+  completedAt: string | null;
 };
 
 export type GoalRow = {
@@ -20,6 +21,7 @@ export type GoalRow = {
   current_value: number;
   target_date: string | null;
   created_at: string;
+  completed_at: string | null;
 };
 
 export function mapGoalRow(row: GoalRow): Goal {
@@ -32,6 +34,7 @@ export function mapGoalRow(row: GoalRow): Goal {
     currentValue: row.current_value,
     targetDate: row.target_date,
     createdAt: row.created_at,
+    completedAt: row.completed_at,
   };
 }
 
@@ -81,4 +84,34 @@ export function goalDeadlineLabel(targetDate: string | null): string | null {
   if (diffDays <= 30) return `Faltan ${weeks} semana${weeks === 1 ? "" : "s"}`;
   const months = Math.round(diffDays / 30);
   return `Faltan ${months} mes${months === 1 ? "" : "es"}`;
+}
+
+export function formatCompletedDate(isoDate: string): string {
+  return new Date(isoDate).toLocaleDateString("es-MX", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+// Cuánto tardó la persona en cumplir la meta, desde que la creó hasta que
+// llegó al 100%. Se muestra en la unidad más clara según la duración.
+export function formatTimeToComplete(createdAt: string, completedAt: string): string {
+  const start = new Date(createdAt).getTime();
+  const end = new Date(completedAt).getTime();
+  const diffDays = Math.max(0, Math.round((end - start) / (1000 * 60 * 60 * 24)));
+
+  if (diffDays === 0) return "Menos de un día";
+  if (diffDays === 1) return "1 día";
+  if (diffDays < 14) return `${diffDays} días`;
+  if (diffDays < 60) {
+    const weeks = Math.round(diffDays / 7);
+    return `${weeks} semana${weeks === 1 ? "" : "s"}`;
+  }
+  if (diffDays < 365) {
+    const months = Math.round(diffDays / 30);
+    return `${months} mes${months === 1 ? "" : "es"}`;
+  }
+  const years = Math.round(diffDays / 365);
+  return `${years} año${years === 1 ? "" : "s"}`;
 }

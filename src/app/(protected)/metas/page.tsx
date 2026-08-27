@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Plus, Target, Trash2 } from "lucide-react";
+import { Plus, Target, Trash2, Trophy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -28,6 +28,8 @@ import {
   addDaysIso,
   goalProgress,
   goalDeadlineLabel,
+  formatCompletedDate,
+  formatTimeToComplete,
   type Goal,
   type GoalType,
 } from "@/lib/goals";
@@ -62,6 +64,9 @@ export default function MetasPage() {
   const [progressValue, setProgressValue] = useState("");
 
   const goals = data?.goals ?? [];
+  const activeGoals = goals.filter((g) => !g.completedAt);
+  const completedGoals = goals.filter((g) => g.completedAt);
+  const [completedOpen, setCompletedOpen] = useState(false);
 
   useEffect(() => {
     if (isFetching) return;
@@ -163,6 +168,7 @@ export default function MetasPage() {
   };
 
   const openProgress = (goal: Goal) => {
+    if (goal.completedAt) return; // metas cumplidas quedan bloqueadas
     setProgressGoal(goal);
     setProgressValue(String(goal.currentValue));
   };
@@ -174,11 +180,21 @@ export default function MetasPage() {
       toast.error("Ingresa un valor válido");
       return;
     }
+    const willComplete = value >= progressGoal.targetValue;
     updateProgress.mutate(
-      { goalId: progressGoal.id, currentValue: value },
+      {
+        goalId: progressGoal.id,
+        currentValue: value,
+        targetValue: progressGoal.targetValue,
+        alreadyCompleted: !!progressGoal.completedAt,
+      },
       {
         onSuccess: () => {
-          toast.success("Progreso actualizado");
+          toast.success(
+            willComplete
+              ? `¡Meta cumplida! "${progressGoal.title}" 🎉`
+              : "Progreso actualizado",
+          );
           setProgressGoal(null);
         },
         onError: () => toast.error("No se pudo actualizar"),
@@ -190,30 +206,47 @@ export default function MetasPage() {
     <div className={styles.page}>
       <div className={styles.header}>
         <h1 className={styles.title}>Tus metas</h1>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => setCreateOpen(true)}
-          className={styles.newButton}
-          ref={newButtonRef}
-        >
-          <Plus size={16} /> Nueva
-        </Button>
+        <div className={styles.headerActions}>
+          {completedGoals.length > 0 && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className={styles.completedButton}
+              onClick={() => setCompletedOpen(true)}
+            >
+              <Trophy size={16} /> Metas cumplidas ({completedGoals.length})
+            </Button>
+          )}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setCreateOpen(true)}
+            className={styles.newButton}
+            ref={newButtonRef}
+          >
+            <Plus size={16} /> Nueva
+          </Button>
+        </div>
       </div>
 
       {isFetching ? (
         <div className={styles.loading}>
           <Spinner />
         </div>
-      ) : goals.length === 0 ? (
+      ) : activeGoals.length === 0 ? (
         <div className={styles.emptyState}>
           <Target size={28} />
-          <p>Aún no tienes metas. Crea la primera.</p>
+          <p>
+            {completedGoals.length > 0
+              ? "¡Ya cumpliste todas tus metas activas! Crea una nueva."
+              : "Aún no tienes metas. Crea la primera."}
+          </p>
         </div>
       ) : (
         <div className={styles.list}>
-          {goals.map((goal, index) => {
+          {activeGoals.map((goal, index) => {
             const progress = goalProgress(goal);
             const deadline = goalDeadlineLabel(goal.targetDate);
             return (
@@ -376,6 +409,39 @@ export default function MetasPage() {
             >
               {updateProgress.isPending ? <Spinner size="sm" /> : "Guardar"}
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={completedOpen} onOpenChange={setCompletedOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className={styles.completedDialogTitle}>
+              <Trophy size={18} /> Metas cumplidas
+            </DialogTitle>
+            <DialogDescription>
+              Metas que ya lograste — quedan guardadas aquí como recuerdo.
+            </DialogDescription>
+          </DialogHeader>
+          <div className={styles.completedList}>
+            {completedGoals.map((goal) => (
+              <div key={goal.id} className={styles.completedCard}>
+                <div className={styles.completedCardIcon}>
+                  <Check size={16} />
+                </div>
+                <div className={styles.completedCardInfo}>
+                  <p className={styles.completedCardTitle}>{goal.title}</p>
+                  <p className={styles.completedCardMeta}>
+                    {goal.targetValue}
+                    {goal.unit ? ` ${goal.unit}` : ""} — cumplida el{" "}
+                    {formatCompletedDate(goal.completedAt!)}
+                  </p>
+                  <p className={styles.completedCardDuration}>
+                    Te tardaste {formatTimeToComplete(goal.createdAt, goal.completedAt!)}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
         </DialogContent>
       </Dialog>

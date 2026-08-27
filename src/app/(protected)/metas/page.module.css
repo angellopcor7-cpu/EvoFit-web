@@ -27,6 +27,83 @@
   gap: var(--spacing-1);
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.completedButton {
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  color: var(--warning);
+  border-color: color-mix(in srgb, var(--warning) 40%, var(--border));
+}
+
+.completedDialogTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  color: var(--warning);
+}
+
+.completedList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.completedCard {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.completedCardIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--success) 20%, transparent);
+  color: var(--success);
+}
+
+.completedCardInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.completedCardTitle {
+  margin: 0;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--foreground);
+}
+
+.completedCardMeta {
+  margin: var(--spacing-1) 0 0;
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
+}
+
+.completedCardDuration {
+  margin: var(--spacing-1) 0 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+
 .loading {
   display: flex;
   align-items: center;

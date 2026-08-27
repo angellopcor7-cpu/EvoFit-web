@@ -70,11 +70,25 @@ export const useDeleteGoal = () => {
 export const useUpdateGoalProgress = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { goalId: string; currentValue: number }): Promise<void> => {
+    mutationFn: async (input: {
+      goalId: string;
+      currentValue: number;
+      targetValue: number;
+      alreadyCompleted: boolean;
+    }): Promise<void> => {
       const supabase = createClient();
+      const update: Record<string, number | string> = {
+        current_value: input.currentValue,
+      };
+      // Se marca como cumplida la primera vez que llega (o supera) el
+      // objetivo — no se vuelve a tocar si ya estaba marcada, para no
+      // perder la fecha real en que se cumplió.
+      if (!input.alreadyCompleted && input.currentValue >= input.targetValue) {
+        update.completed_at = new Date().toISOString();
+      }
       const { error } = await supabase
         .from("user_goals")
-        .update({ current_value: input.currentValue })
+        .update(update)
         .eq("id", input.goalId);
       if (error) throw new Error(error.message);
     },
