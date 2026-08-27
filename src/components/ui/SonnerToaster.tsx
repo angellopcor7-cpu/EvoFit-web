@@ -8,6 +8,8 @@ type ToasterProps = React.ComponentProps<typeof Sonner>;
 export const SonnerToaster = ({ className, ...props }: ToasterProps) => {
   return (
     <Sonner
+      position="top-center"
+      offset="4.5rem"
       className={`${styles.toaster} ${className ?? ""}`}
       toastOptions={{
         unstyled: true,
