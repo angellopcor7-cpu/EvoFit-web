@@ -48,10 +48,44 @@ export function SpotlightTour({
   }, [current]);
 
   useEffect(() => {
-    const original = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    // "overflow: hidden" en el body no basta en iOS Safari (el scroll con
+    // el dedo se sigue colando). Fijamos el body en su posición actual y
+    // además bloqueamos touch/wheel/teclado por si acaso, para que la
+    // pantalla no se mueva mientras el tutorial está abierto.
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const original = {
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+      overflow: body.style.overflow,
+    };
+
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+
+    const preventScroll = (event: Event) => {
+      event.preventDefault();
+    };
+    window.addEventListener("touchmove", preventScroll, { passive: false });
+    window.addEventListener("wheel", preventScroll, { passive: false });
+
     return () => {
-      document.body.style.overflow = original;
+      body.style.position = original.position;
+      body.style.top = original.top;
+      body.style.left = original.left;
+      body.style.right = original.right;
+      body.style.width = original.width;
+      body.style.overflow = original.overflow;
+      window.scrollTo(0, scrollY);
+      window.removeEventListener("touchmove", preventScroll);
+      window.removeEventListener("wheel", preventScroll);
     };
   }, []);
 
