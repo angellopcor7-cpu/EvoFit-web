@@ -10,8 +10,10 @@ const SUPABASE_BASE_URL =
 export const EXERCISE_IMAGES: Record<string, string> = {
   // Espalda
   "Remo con barra": `${SUPABASE_BASE_URL}/remo-con-barra.png`,
-  "Jalón al pecho supinado": `${SUPABASE_BASE_URL}/jalon-al-pecho-supinado.png`,
-  "Dominadas (barra fija)": `${SUPABASE_BASE_URL}/dominadas.png`,
+  "Jalón al pecho supinado": "/exercise-images/jalon-al-pecho-supinado.png",
+  "Jalón al pecho abierto": "/exercise-images/jalon-al-pecho-abierto.png",
+  "Jalón con triángulo": "/exercise-images/jalon-triangulo.png",
+  "Dominadas (barra fija)": "/exercise-images/dominadas.png",
   "Encogimiento de hombros (trapecio)": "/exercise-images/encogimiento-hombros.png",
   "Face pull": "/exercise-images/face-pull.png",
   "Hiperextensión (extensión lumbar)": "/exercise-images/hiperextension.png",
