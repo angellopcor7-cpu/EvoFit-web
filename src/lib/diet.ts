@@ -61,6 +61,15 @@ export const DIET_MEAL_SLOT_LABEL: Record<DietMealSlot, string> = {
   snack: "Snack",
 };
 
+// Franjas horarias fijas para saber qué comida le toca al usuario ahora
+// mismo: desayuno 00:00–12:00, comida 12:01pm–6pm, cena 6:01pm–11:59pm.
+export function getCurrentMealSlot(date: Date): "desayuno" | "comida" | "cena" {
+  const totalMin = date.getHours() * 60 + date.getMinutes();
+  if (totalMin < 720) return "desayuno"; // antes de las 12:00 pm
+  if (totalMin <= 1080) return "comida"; // 12:00 pm – 6:00 pm
+  return "cena"; // después de las 6:00 pm
+}
+
 export const DIET_PROTEIN_TYPES = [
   "pollo",
   "res",

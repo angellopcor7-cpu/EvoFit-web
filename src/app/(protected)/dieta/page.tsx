@@ -25,6 +25,7 @@ import {
   DIET_MEAL_SLOT_LABEL,
   DIET_PROTEIN_TYPES,
   DIET_PROTEIN_TYPE_LABEL,
+  getCurrentMealSlot,
   type DietGoal,
   type DietStyle,
   type DietBudget,
@@ -39,15 +40,6 @@ import {
 import styles from "./page.module.css";
 
 type Step = "meta" | "resultado";
-
-// Franjas horarias que el usuario definió para saber qué comida le toca
-// ahora mismo: desayuno 00:00–12:00, comida 12:01pm–6pm, cena 6:01pm–11:59pm.
-function getCurrentMealSlot(date: Date): "desayuno" | "comida" | "cena" {
-  const totalMin = date.getHours() * 60 + date.getMinutes();
-  if (totalMin < 720) return "desayuno"; // antes de las 12:00 pm
-  if (totalMin <= 1080) return "comida"; // 12:00 pm – 6:00 pm
-  return "cena"; // después de las 6:00 pm
-}
 
 // Los datos corporales del onboarding usan hombre/mujer/no_binario; los
 // cálculos de macros de dieta usan masculino/femenino. "no_binario" se

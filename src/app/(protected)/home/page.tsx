@@ -23,7 +23,7 @@ import { useWorkoutStats } from "@/hooks/useWorkoutCompletions";
 import { useWeeklyPlan } from "@/hooks/useWeeklyPlan";
 import { useWorkoutRoutines } from "@/hooks/useWorkoutRoutines";
 import { useUserRoutines } from "@/hooks/useUserRoutines";
-import { DIET_GOAL_LABEL } from "@/lib/diet";
+import { DIET_GOAL_LABEL, DIET_MEAL_SLOT_LABEL, getCurrentMealSlot } from "@/lib/diet";
 import {
   computeDayRoutinePlan,
   DAY_ORDER,
@@ -53,6 +53,17 @@ export default function HomePage() {
   const ctaCardRef = useRef<HTMLDivElement>(null);
   const planLinkRef = useRef<HTMLAnchorElement>(null);
   const dietCardRef = useRef<HTMLAnchorElement>(null);
+  const [currentMealSlot, setCurrentMealSlot] = useState<
+    "desayuno" | "comida" | "cena" | null
+  >(null);
+
+  useEffect(() => {
+    setCurrentMealSlot(getCurrentMealSlot(new Date()));
+    const interval = setInterval(() => {
+      setCurrentMealSlot(getCurrentMealSlot(new Date()));
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, []);
 
   const trainedToday = profile?.lastActiveDate === todayStr();
 
@@ -261,18 +272,42 @@ export default function HomePage() {
           {dietPlan ? <RefreshCw size={22} /> : <Utensils size={22} />}
         </div>
         <div className={styles.dietCardInfo}>
-          <p className={styles.dietCardEyebrow}>Nutrición</p>
           {dietPlan ? (
-            <>
-              <p className={styles.dietCardTitle}>
-                {DIET_GOAL_LABEL[dietPlan.goal]} · {dietPlan.targetKcal} kcal/día
-              </p>
-              <p className={styles.dietCardSubtitle}>
-                Ver tu menú de hoy y macros
-              </p>
-            </>
+            (() => {
+              const currentMeal = currentMealSlot
+                ? dietPlan.meals.find((m) => m.mealSlot === currentMealSlot)
+                : null;
+              return (
+                <>
+                  <p className={styles.dietCardEyebrow}>
+                    {currentMealSlot
+                      ? `Te toca: ${DIET_MEAL_SLOT_LABEL[currentMealSlot]}`
+                      : "Nutrición"}
+                  </p>
+                  {currentMeal ? (
+                    <>
+                      <p className={styles.dietCardTitle}>{currentMeal.name}</p>
+                      <p className={styles.dietCardSubtitle}>
+                        {currentMeal.kcal} kcal · P {currentMeal.proteinG}g · C{" "}
+                        {currentMeal.carbsG}g · G {currentMeal.fatG}g
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className={styles.dietCardTitle}>
+                        {DIET_GOAL_LABEL[dietPlan.goal]} · {dietPlan.targetKcal} kcal/día
+                      </p>
+                      <p className={styles.dietCardSubtitle}>
+                        Ver tu menú de hoy y macros
+                      </p>
+                    </>
+                  )}
+                </>
+              );
+            })()
           ) : (
             <>
+              <p className={styles.dietCardEyebrow}>Nutrición</p>
               <p className={styles.dietCardTitle}>Arma tu dieta</p>
               <p className={styles.dietCardSubtitle}>
                 Calcula tus calorías y macros con un menú real
