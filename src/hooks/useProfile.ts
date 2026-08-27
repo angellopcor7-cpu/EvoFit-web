@@ -59,6 +59,7 @@ export type Profile = {
   requirePhotoAuth: boolean;
   photoAuthCredentialId: string | null;
   fastingMode: boolean;
+  fastingEndTime: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -89,6 +90,7 @@ type ProfileRow = {
   require_photo_auth: boolean;
   photo_auth_credential_id: string | null;
   fasting_mode: boolean;
+  fasting_end_time: string;
   created_at: string;
   updated_at: string;
 };
@@ -120,6 +122,7 @@ function mapProfile(row: ProfileRow): Profile {
     requirePhotoAuth: row.require_photo_auth,
     photoAuthCredentialId: row.photo_auth_credential_id,
     fastingMode: row.fasting_mode,
+    fastingEndTime: row.fasting_end_time,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -422,20 +425,31 @@ export const useUpdatePhotoAuthSettings = () => {
 };
 
 // Modo ayuno: oculta el desayuno y ajusta la ventana de "qué me toca
-// comer ahora" — la persona hace ayuno intermitente y no desayuna.
+// comer ahora" — la persona hace ayuno intermitente y elige a qué hora
+// termina su ayuno (su primera comida del día).
 export const useUpdateFastingMode = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (fastingMode: boolean): Promise<void> => {
+    mutationFn: async (input: {
+      fastingMode: boolean;
+      fastingEndTime?: string;
+    }): Promise<void> => {
       const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) throw new Error("No autenticado");
 
+      const update: Record<string, boolean | string> = {
+        fasting_mode: input.fastingMode,
+      };
+      if (input.fastingEndTime) {
+        update.fasting_end_time = input.fastingEndTime;
+      }
+
       const { error } = await supabase
         .from("profiles")
-        .update({ fasting_mode: fastingMode })
+        .update(update)
         .eq("id", user.id);
       if (error) throw new Error(error.message);
     },

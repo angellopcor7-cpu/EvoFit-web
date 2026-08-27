@@ -65,14 +65,15 @@ export default function DietaPage() {
     "desayuno" | "comida" | "cena" | "ayuno" | null
   >(null);
   const fastingMode = profile?.fastingMode ?? false;
+  const fastingEndTime = profile?.fastingEndTime ?? "12:00";
 
   useEffect(() => {
-    setCurrentMealSlot(getCurrentMealSlot(new Date(), fastingMode));
+    setCurrentMealSlot(getCurrentMealSlot(new Date(), fastingMode, fastingEndTime));
     const interval = setInterval(() => {
-      setCurrentMealSlot(getCurrentMealSlot(new Date(), fastingMode));
+      setCurrentMealSlot(getCurrentMealSlot(new Date(), fastingMode, fastingEndTime));
     }, 60_000);
     return () => clearInterval(interval);
-  }, [fastingMode]);
+  }, [fastingMode, fastingEndTime]);
   const [activityLevel, setActivityLevel] = useState<ActivityLevel>("moderado");
   const [proteinPreferences, setProteinPreferences] = useState<DietProteinType[]>([]);
 
@@ -323,7 +324,8 @@ export default function DietaPage() {
               {currentMealSlot === "ayuno" ? (
                 <>
                   <Clock3 size={14} /> Estás en tu ventana de{" "}
-                  <strong>ayuno</strong> — tu primera comida es al mediodía
+                  <strong>ayuno</strong> — tu primera comida es a las{" "}
+                  {fastingEndTime}
                 </>
               ) : (
                 <>

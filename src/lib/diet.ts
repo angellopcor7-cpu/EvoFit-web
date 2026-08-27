@@ -68,16 +68,27 @@ export const CURRENT_SLOT_LABEL: Record<"desayuno" | "comida" | "cena" | "ayuno"
   ayuno: "Ayuno",
 };
 
-// Franjas horarias fijas para saber qué comida le toca al usuario ahora
-// mismo: desayuno 00:00–12:00, comida 12:01pm–6pm, cena 6:01pm–11:59pm.
-// En modo ayuno no hay desayuno: esa franja se muestra como "ayuno" y la
-// primera comida real es la comida del mediodía.
+// Franjas horarias para saber qué comida le toca al usuario ahora mismo.
+// Por default: desayuno 00:00–12:00, comida 12:01pm–6pm, cena 6:01pm–11:59pm.
+// En modo ayuno no hay desayuno: el ayuno empieza a las 00:00 y termina a
+// la hora que la persona elija ("fastingEndTime", ej. "14:30") — de ahí en
+// adelante es su comida, y la cena se mantiene fija a partir de las 6pm.
 export function getCurrentMealSlot(
   date: Date,
   fastingMode = false,
+  fastingEndTime = "12:00",
 ): "desayuno" | "comida" | "cena" | "ayuno" {
   const totalMin = date.getHours() * 60 + date.getMinutes();
-  if (totalMin < 720) return fastingMode ? "ayuno" : "desayuno"; // antes de las 12:00 pm
+
+  if (fastingMode) {
+    const [endH, endM] = fastingEndTime.split(":").map(Number);
+    const fastingEndMin = (endH || 0) * 60 + (endM || 0);
+    if (totalMin < fastingEndMin) return "ayuno";
+    if (totalMin < 1080) return "comida"; // hasta las 6:00 pm
+    return "cena";
+  }
+
+  if (totalMin < 720) return "desayuno"; // antes de las 12:00 pm
   if (totalMin <= 1080) return "comida"; // 12:00 pm – 6:00 pm
   return "cena"; // después de las 6:00 pm
 }

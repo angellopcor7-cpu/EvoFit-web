@@ -905,24 +905,48 @@ export default function PerfilPage() {
                 <div className={styles.notificationRowText}>
                   <span className={styles.notificationRowLabel}>Modo ayuno</span>
                   <span className={styles.notificationRowHint}>
-                    Oculta el desayuno; tu primera comida es la comida del
-                    mediodía
+                    Tu ayuno empieza a las 00:00 y termina a la hora que tú
+                    elijas
                   </span>
                 </div>
                 <Switch
                   checked={profile?.fastingMode ?? false}
                   onCheckedChange={(checked) =>
-                    updateFastingMode.mutate(checked, {
-                      onSuccess: () =>
-                        toast.success(
-                          checked ? "Modo ayuno activado" : "Modo ayuno desactivado",
-                        ),
-                      onError: () => toast.error("No se pudo actualizar"),
-                    })
+                    updateFastingMode.mutate(
+                      { fastingMode: checked },
+                      {
+                        onSuccess: () =>
+                          toast.success(
+                            checked ? "Modo ayuno activado" : "Modo ayuno desactivado",
+                          ),
+                        onError: () => toast.error("No se pudo actualizar"),
+                      },
+                    )
                   }
                   disabled={updateFastingMode.isPending}
                 />
               </div>
+              {profile?.fastingMode && (
+                <div className={styles.fastingTimeRow}>
+                  <span className={styles.notificationRowLabel}>
+                    Tu ayuno termina a las
+                  </span>
+                  <Input
+                    type="time"
+                    className={styles.fastingTimeInput}
+                    value={profile.fastingEndTime}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (!value) return;
+                      updateFastingMode.mutate(
+                        { fastingMode: true, fastingEndTime: value },
+                        { onError: () => toast.error("No se pudo actualizar") },
+                      );
+                    }}
+                    disabled={updateFastingMode.isPending}
+                  />
+                </div>
+              )}
             </div>
 
             <div className={styles.notificationsSection}>

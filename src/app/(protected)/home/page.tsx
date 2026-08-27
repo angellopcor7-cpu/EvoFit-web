@@ -58,14 +58,15 @@ export default function HomePage() {
     "desayuno" | "comida" | "cena" | "ayuno" | null
   >(null);
   const fastingMode = profile?.fastingMode ?? false;
+  const fastingEndTime = profile?.fastingEndTime ?? "12:00";
 
   useEffect(() => {
-    setCurrentMealSlot(getCurrentMealSlot(new Date(), fastingMode));
+    setCurrentMealSlot(getCurrentMealSlot(new Date(), fastingMode, fastingEndTime));
     const interval = setInterval(() => {
-      setCurrentMealSlot(getCurrentMealSlot(new Date(), fastingMode));
+      setCurrentMealSlot(getCurrentMealSlot(new Date(), fastingMode, fastingEndTime));
     }, 60_000);
     return () => clearInterval(interval);
-  }, [fastingMode]);
+  }, [fastingMode, fastingEndTime]);
 
   const trainedToday = profile?.lastActiveDate === todayStr();
 
@@ -238,7 +239,7 @@ export default function HomePage() {
               <p className={styles.dietCardEyebrow}>En ayuno</p>
               <p className={styles.dietCardTitle}>Ventana de ayuno activa</p>
               <p className={styles.dietCardSubtitle}>
-                Tu primera comida es al mediodía
+                Tu primera comida es a las {fastingEndTime}
               </p>
             </>
           ) : dietPlan ? (
