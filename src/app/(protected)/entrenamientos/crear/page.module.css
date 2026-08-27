@@ -34,6 +34,26 @@
   text-align: center;
 }
 
+.imageDisclaimer {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-3);
+  margin-bottom: var(--spacing-3);
+  background: color-mix(in srgb, var(--info) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--info) 30%, transparent);
+  border-radius: var(--radius-md);
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.imageDisclaimer svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--info);
+}
+
 .loading {
   display: flex;
   align-items: center;

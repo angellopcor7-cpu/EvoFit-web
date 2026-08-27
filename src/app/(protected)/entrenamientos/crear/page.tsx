@@ -21,6 +21,7 @@ import {
   Plus,
   Minus,
   X,
+  Info,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
@@ -275,6 +276,14 @@ export default function CrearRutinaPage() {
           {view === "review" && "Tu rutina"}
         </h1>
         <div className={styles.headerSpacer} />
+      </div>
+
+      <div className={styles.imageDisclaimer}>
+        <Info size={14} />
+        <span>
+          Las imágenes de referencia pueden tener algún error — mejor guíate
+          por las indicaciones escritas de cada ejercicio.
+        </span>
       </div>
 
       {view === "groups" && (

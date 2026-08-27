@@ -83,19 +83,18 @@ const LEVEL_ORDER = ["aprendiz", "principiante", "intermedio", "avanzado", "todo
 // donde el day_label realmente representa un grupo que se repite entre
 // niveles (musculación y calistenia). El resto de categorías (sesiones
 // tipo clase) no usan este filtro porque cada day_label ahí es único.
-const GROUP_ORDER: Partial<Record<UiCategory, string[]>> = {
-  musculacion: [
-    "Full Body",
-    "Empuje",
-    "Tirón",
-    "Piernas",
-    "Pecho",
-    "Espalda",
-    "Hombros",
-    "Brazos",
-    "Abdomen",
-  ],
+// Se separa en dos filtros para el usuario: "Grupo" (tipo de split, ej.
+// Empuje/Tirón/Full Body) y "Parte del cuerpo" (un solo músculo, ej.
+// Pecho/Espalda). Ambos escriben al mismo estado (selectedGroup) porque
+// cada rutina solo tiene un day_label — es la misma lista de valores
+// posibles, solo mostrada en dos secciones para que sea más fácil de leer.
+const SPLIT_GROUP_ORDER: Partial<Record<UiCategory, string[]>> = {
+  musculacion: ["Full Body", "Empuje", "Tirón", "Piernas y Glúteos"],
   calistenia: ["Full Body A", "Full Body B", "Tren superior", "Tren inferior y core"],
+};
+
+const BODY_PART_ORDER: Partial<Record<UiCategory, string[]>> = {
+  musculacion: ["Pecho", "Espalda", "Hombros", "Brazos", "Abdomen"],
 };
 
 type UiCategory =
@@ -305,10 +304,16 @@ export default function EntrenamientosPage() {
     return LEVEL_ORDER.filter((level) => present.has(level as WorkoutRoutine["level"]));
   }, [categoryRoutines]);
 
-  const availableGroups = useMemo(() => {
+  const availableSplitGroups = useMemo(() => {
     if (!showGroupChips) return [];
     const present = new Set(categoryRoutines.map((r) => r.dayLabel).filter(Boolean));
-    return (GROUP_ORDER[activeCategory] ?? []).filter((g) => present.has(g));
+    return (SPLIT_GROUP_ORDER[activeCategory] ?? []).filter((g) => present.has(g));
+  }, [categoryRoutines, showGroupChips, activeCategory]);
+
+  const availableBodyParts = useMemo(() => {
+    if (!showGroupChips) return [];
+    const present = new Set(categoryRoutines.map((r) => r.dayLabel).filter(Boolean));
+    return (BODY_PART_ORDER[activeCategory] ?? []).filter((g) => present.has(g));
   }, [categoryRoutines, showGroupChips, activeCategory]);
 
   const availableBodyTypes = useMemo(() => {
@@ -521,7 +526,7 @@ export default function EntrenamientosPage() {
   // botones (a petición del usuario). hasAnyFilters decide si ese botón
   // se muestra siquiera.
   const hasAnyFilters =
-    (showGroupChips && availableGroups.length > 1) ||
+    (showGroupChips && (availableSplitGroups.length > 1 || availableBodyParts.length > 1)) ||
     (showBodyTypeChips && availableBodyTypes.length > 1) ||
     availableLevels.length > 1;
 
@@ -754,14 +759,25 @@ export default function EntrenamientosPage() {
             <DialogDescription>{meta.label}</DialogDescription>
           </DialogHeader>
           <div className={styles.filters}>
-            {showGroupChips && availableGroups.length > 1 && (
+            {showGroupChips && availableSplitGroups.length > 1 && (
               <FilterChips
                 label="Grupo"
                 active={selectedGroup}
                 onSelect={setSelectedGroup}
                 options={[
                   { value: null, label: "Todos" },
-                  ...availableGroups.map((g) => ({ value: g, label: g })),
+                  ...availableSplitGroups.map((g) => ({ value: g, label: g })),
+                ]}
+              />
+            )}
+            {showGroupChips && availableBodyParts.length > 1 && (
+              <FilterChips
+                label="Parte del cuerpo"
+                active={selectedGroup}
+                onSelect={setSelectedGroup}
+                options={[
+                  { value: null, label: "Todos" },
+                  ...availableBodyParts.map((g) => ({ value: g, label: g })),
                 ]}
               />
             )}
