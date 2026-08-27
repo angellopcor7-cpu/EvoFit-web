@@ -63,6 +63,7 @@ export default function ProgresoPage() {
   useEffect(() => {
     if (isLoading) return;
     if (!profile) return;
+    if (!profile.hasSeenWelcome || !profile.hasCompletedOnboarding) return;
     if (profile.hasSeenProgresoTutorial) return;
     if (tourDismissedThisVisit) return;
     const timeout = setTimeout(() => setTourOpen(true), 300);

@@ -66,6 +66,7 @@ export default function MetasPage() {
   useEffect(() => {
     if (isFetching) return;
     if (!sessionData?.profile) return;
+    if (!sessionData.profile.hasSeenWelcome || !sessionData.profile.hasCompletedOnboarding) return;
     if (sessionData.profile.hasSeenMetasTutorial) return;
     if (tourDismissedThisVisit) return;
     const timeout = setTimeout(() => setTourOpen(true), 300);

@@ -311,6 +311,7 @@ export default function PerfilPage() {
 
   useEffect(() => {
     if (!profile) return;
+    if (!profile.hasSeenWelcome || !profile.hasCompletedOnboarding) return;
     if (profile.hasSeenPerfilTutorial) return;
     if (tourDismissedThisVisit) return;
     const timeout = setTimeout(() => setTourOpen(true), 300);

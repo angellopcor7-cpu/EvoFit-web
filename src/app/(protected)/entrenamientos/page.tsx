@@ -462,6 +462,7 @@ export default function EntrenamientosPage() {
   useEffect(() => {
     if (loading) return;
     if (!sessionData?.profile) return;
+    if (!sessionData.profile.hasSeenWelcome || !sessionData.profile.hasCompletedOnboarding) return;
     if (sessionData.profile.hasSeenWorkoutsTutorial) return;
     if (tourDismissedThisVisit) return;
     const timeout = setTimeout(() => setTourOpen(true), 300);
