@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, RefreshCw, Flame, Beef, Wheat, Droplet, ShieldAlert } from "lucide-react";
+import { ArrowLeft, RefreshCw, Flame, Beef, Wheat, Droplet, ShieldAlert, Clock3 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
@@ -40,6 +40,15 @@ import styles from "./page.module.css";
 
 type Step = "meta" | "resultado";
 
+// Franjas horarias que el usuario definió para saber qué comida le toca
+// ahora mismo: desayuno 00:00–12:00, comida 12:01pm–6pm, cena 6:01pm–11:59pm.
+function getCurrentMealSlot(date: Date): "desayuno" | "comida" | "cena" {
+  const totalMin = date.getHours() * 60 + date.getMinutes();
+  if (totalMin < 720) return "desayuno"; // antes de las 12:00 pm
+  if (totalMin <= 1080) return "comida"; // 12:00 pm – 6:00 pm
+  return "cena"; // después de las 6:00 pm
+}
+
 // Los datos corporales del onboarding usan hombre/mujer/no_binario; los
 // cálculos de macros de dieta usan masculino/femenino. "no_binario" se
 // aproxima con la fórmula masculina, que es el estimador neutro más común.
@@ -59,6 +68,17 @@ export default function DietaPage() {
   const [goal, setGoal] = useState<DietGoal | null>(null);
   const [dietStyle, setDietStyle] = useState<DietStyle | null>(null);
   const [budget, setBudget] = useState<DietBudget | null>(null);
+  const [currentMealSlot, setCurrentMealSlot] = useState<
+    "desayuno" | "comida" | "cena" | null
+  >(null);
+
+  useEffect(() => {
+    setCurrentMealSlot(getCurrentMealSlot(new Date()));
+    const interval = setInterval(() => {
+      setCurrentMealSlot(getCurrentMealSlot(new Date()));
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, []);
   const [activityLevel, setActivityLevel] = useState<ActivityLevel>("moderado");
   const [proteinPreferences, setProteinPreferences] = useState<DietProteinType[]>([]);
 
@@ -304,20 +324,36 @@ export default function DietaPage() {
             </p>
           )}
 
+          {currentMealSlot && (
+            <p className={styles.currentMealNote}>
+              <Clock3 size={14} /> Ahorita te toca:{" "}
+              <strong>{DIET_MEAL_SLOT_LABEL[currentMealSlot]}</strong>
+            </p>
+          )}
+
           <div className={styles.mealList}>
-            {plan.meals.map((meal) => (
-              <div key={meal.id} className={styles.mealCard}>
-                <p className={styles.mealSlot}>
-                  {DIET_MEAL_SLOT_LABEL[meal.mealSlot]}
-                </p>
-                <p className={styles.mealName}>{meal.name}</p>
-                <p className={styles.mealDescription}>{meal.description}</p>
-                <p className={styles.mealMacros}>
-                  <Flame size={12} /> {meal.kcal} kcal · P {meal.proteinG}g · C{" "}
-                  {meal.carbsG}g · G {meal.fatG}g
-                </p>
-              </div>
-            ))}
+            {plan.meals.map((meal) => {
+              const isCurrent = meal.mealSlot === currentMealSlot;
+              return (
+                <div
+                  key={meal.id}
+                  className={`${styles.mealCard} ${isCurrent ? styles.mealCardCurrent : ""}`}
+                >
+                  <div className={styles.mealSlotRow}>
+                    <p className={styles.mealSlot}>
+                      {DIET_MEAL_SLOT_LABEL[meal.mealSlot]}
+                    </p>
+                    {isCurrent && <span className={styles.nowBadge}>Ahora</span>}
+                  </div>
+                  <p className={styles.mealName}>{meal.name}</p>
+                  <p className={styles.mealDescription}>{meal.description}</p>
+                  <p className={styles.mealMacros}>
+                    <Flame size={12} /> {meal.kcal} kcal · P {meal.proteinG}g · C{" "}
+                    {meal.carbsG}g · G {meal.fatG}g
+                  </p>
+                </div>
+              );
+            })}
           </div>
 
           <div className={styles.fieldRow}>
