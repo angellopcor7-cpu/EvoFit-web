@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -27,8 +27,16 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Spinner } from "@/components/ui/Spinner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/Dialog";
 import { useExercises } from "@/hooks/useExercises";
 import { useCreateUserRoutine } from "@/hooks/useUserRoutines";
+import { useAuthSession, useMarkImageDisclaimerSeen } from "@/hooks/useProfile";
 import type { Exercise, MuscleGroup } from "@/lib/exercises";
 import { getExerciseImageUrl } from "@/lib/exerciseImages";
 import styles from "./page.module.css";
@@ -97,6 +105,8 @@ export default function CrearRutinaPage() {
   const category = parseCategory(searchParams.get("category"));
   const { data, isFetching } = useExercises();
   const createRoutine = useCreateUserRoutine();
+  const { data: sessionData } = useAuthSession();
+  const markDisclaimerSeen = useMarkImageDisclaimerSeen();
 
   const [view, setView] = useState<View>(
     category === "cardio" ? "exercises" : "groups",
@@ -109,6 +119,18 @@ export default function CrearRutinaPage() {
   const [expandedExerciseIds, setExpandedExerciseIds] = useState<Set<string>>(
     () => new Set(),
   );
+  const [disclaimerOpen, setDisclaimerOpen] = useState(false);
+
+  useEffect(() => {
+    if (!sessionData?.profile) return;
+    if (sessionData.profile.hasSeenImageDisclaimer) return;
+    setDisclaimerOpen(true);
+  }, [sessionData?.profile]);
+
+  const handleNeverShowDisclaimer = () => {
+    setDisclaimerOpen(false);
+    markDisclaimerSeen.mutate();
+  };
 
   const toggleExerciseImage = (exerciseId: string) => {
     setExpandedExerciseIds((prev) => {
@@ -278,13 +300,37 @@ export default function CrearRutinaPage() {
         <div className={styles.headerSpacer} />
       </div>
 
-      <div className={styles.imageDisclaimer}>
-        <Info size={14} />
-        <span>
-          Las imágenes de referencia pueden tener algún error — mejor guíate
-          por las indicaciones escritas de cada ejercicio.
-        </span>
-      </div>
+      <Dialog open={disclaimerOpen} onOpenChange={setDisclaimerOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className={styles.disclaimerTitle}>
+              <Info size={18} /> Sobre las imágenes de referencia
+            </DialogTitle>
+            <DialogDescription>
+              Las imágenes de referencia pueden tener algún error — mejor
+              guíate por las indicaciones escritas de cada ejercicio.
+            </DialogDescription>
+          </DialogHeader>
+          <div className={styles.disclaimerActions}>
+            <Button
+              type="button"
+              variant="destructive"
+              className={styles.disclaimerNeverButton}
+              onClick={handleNeverShowDisclaimer}
+            >
+              No volver a enseñar
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className={styles.disclaimerAcceptButton}
+              onClick={() => setDisclaimerOpen(false)}
+            >
+              Entendido
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {view === "groups" && (
         <>

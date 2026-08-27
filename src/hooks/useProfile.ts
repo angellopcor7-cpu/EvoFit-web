@@ -60,6 +60,7 @@ export type Profile = {
   photoAuthCredentialId: string | null;
   fastingMode: boolean;
   fastingEndTime: string;
+  hasSeenImageDisclaimer: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -91,6 +92,7 @@ type ProfileRow = {
   photo_auth_credential_id: string | null;
   fasting_mode: boolean;
   fasting_end_time: string;
+  has_seen_image_disclaimer: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -123,6 +125,7 @@ function mapProfile(row: ProfileRow): Profile {
     photoAuthCredentialId: row.photo_auth_credential_id,
     fastingMode: row.fasting_mode,
     fastingEndTime: row.fasting_end_time,
+    hasSeenImageDisclaimer: row.has_seen_image_disclaimer,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -450,6 +453,30 @@ export const useUpdateFastingMode = () => {
       const { error } = await supabase
         .from("profiles")
         .update(update)
+        .eq("id", user.id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["auth", "session"] });
+    },
+  });
+};
+
+// Aviso de "las imágenes pueden tener errores" en Crear rutina — se
+// recuerda por separado, igual que los tutoriales.
+export const useMarkImageDisclaimerSeen = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (): Promise<void> => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("No autenticado");
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({ has_seen_image_disclaimer: true })
         .eq("id", user.id);
       if (error) throw new Error(error.message);
     },
