@@ -2,11 +2,19 @@
 
 import { useEffect, useState } from "react";
 import * as z from "zod";
+import Link from "next/link";
 import { Mail, Lock, User, Eye, EyeOff, Flame } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/Dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
 import {
   Form,
@@ -17,7 +25,7 @@ import {
   useForm,
 } from "@/components/ui/Form";
 import { useAuthSession } from "@/hooks/useProfile";
-import { useLogin, useSignup } from "@/hooks/useAuthActions";
+import { useLogin, useSignup, useRequestPasswordReset } from "@/hooks/useAuthActions";
 import styles from "./page.module.css";
 
 const loginSchema = z.object({
@@ -47,6 +55,9 @@ export default function AuthPage() {
   const sessionQuery = useAuthSession();
   const loginMutation = useLogin();
   const signupMutation = useSignup();
+  const requestPasswordReset = useRequestPasswordReset();
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
 
   const loginForm = useForm({
     defaultValues: { email: "", password: "" },
@@ -104,6 +115,28 @@ export default function AuthPage() {
         },
       },
     );
+  };
+
+  const handleForgotPassword = () => {
+    setForgotPasswordEmail(loginForm.values.email);
+    setForgotPasswordOpen(true);
+  };
+
+  const handleSendResetEmail = () => {
+    if (!forgotPasswordEmail || !forgotPasswordEmail.includes("@")) {
+      toast.error("Ingresa un correo válido");
+      return;
+    }
+    requestPasswordReset.mutate(forgotPasswordEmail, {
+      onSuccess: () => {
+        toast.success("Te enviamos un correo para restablecer tu contraseña");
+        setForgotPasswordOpen(false);
+      },
+      onError: (error) =>
+        toast.error(
+          error instanceof Error ? error.message : "No se pudo enviar el correo",
+        ),
+    });
   };
 
   return (
@@ -165,7 +198,11 @@ export default function AuthPage() {
                 <FormItem name="password">
                   <div className={styles.labelRow}>
                     <FormLabel>Contraseña</FormLabel>
-                    <button type="button" className={styles.linkButton}>
+                    <button
+                      type="button"
+                      className={styles.linkButton}
+                      onClick={handleForgotPassword}
+                    >
                       ¿Olvidaste tu contraseña?
                     </button>
                   </div>
@@ -368,7 +405,15 @@ export default function AuthPage() {
         </Tabs>
 
         <p className={styles.footerText}>
-          Al continuar aceptas nuestros Términos y Política de Privacidad.
+          Al continuar aceptas nuestros{" "}
+          <Link href="/terminos" className={styles.footerLink}>
+            Términos
+          </Link>{" "}
+          y{" "}
+          <Link href="/privacidad" className={styles.footerLink}>
+            Política de Privacidad
+          </Link>
+          .
         </p>
       </div>
 
@@ -376,6 +421,37 @@ export default function AuthPage() {
         <Flame size={14} />
         <span>Miles de personas ya están construyendo su racha con EvoFit</span>
       </div>
+
+      <Dialog open={forgotPasswordOpen} onOpenChange={setForgotPasswordOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Recuperar contraseña</DialogTitle>
+            <DialogDescription>
+              Te mandamos un correo con un link para crear una contraseña
+              nueva.
+            </DialogDescription>
+          </DialogHeader>
+          <div className={styles.inputWrap}>
+            <Mail size={16} className={styles.inputIcon} />
+            <Input
+              type="email"
+              placeholder="tu@correo.com"
+              autoComplete="email"
+              value={forgotPasswordEmail}
+              onChange={(e) => setForgotPasswordEmail(e.target.value)}
+              className={styles.inputWithIcon}
+            />
+          </div>
+          <Button
+            type="button"
+            className={styles.submitButton}
+            onClick={handleSendResetEmail}
+            disabled={requestPasswordReset.isPending}
+          >
+            {requestPasswordReset.isPending ? "Enviando..." : "Enviar correo"}
+          </Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

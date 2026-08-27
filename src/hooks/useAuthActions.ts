@@ -70,3 +70,25 @@ export const useLogout = () => {
     },
   });
 };
+
+export const useRequestPasswordReset = () => {
+  return useMutation({
+    mutationFn: async (email: string) => {
+      const supabase = createClient();
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/restablecer-contrasena`,
+      });
+      if (error) throw new Error(error.message);
+    },
+  });
+};
+
+export const useUpdatePassword = () => {
+  return useMutation({
+    mutationFn: async (password: string) => {
+      const supabase = createClient();
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw new Error(error.message);
+    },
+  });
+};
