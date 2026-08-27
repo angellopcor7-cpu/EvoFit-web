@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Flame, Dumbbell, TrendingUp, CalendarDays } from "lucide-react";
+import { Flame, Dumbbell, TrendingUp, CalendarDays, Share2 } from "lucide-react";
+import { toast } from "sonner";
 import { useAuthSession, useMarkTutorialSeen } from "@/hooks/useProfile";
 import { useWorkoutStats } from "@/hooks/useWorkoutCompletions";
 import { Progress } from "@/components/ui/Progress";
+import { Button } from "@/components/ui/Button";
 import { SpotlightTour, type TourStep } from "@/components/SpotlightTour";
 import { WORKOUT_CATEGORY_LABEL } from "@/lib/workouts";
+import { generateStreakShareCard, shareOrDownloadCard } from "@/lib/shareCard";
 import styles from "./page.module.css";
 
 function relativeDate(iso: string): string {
@@ -46,6 +49,7 @@ export default function ProgresoPage() {
 
   const [tourOpen, setTourOpen] = useState(false);
   const [tourDismissedThisVisit, setTourDismissedThisVisit] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const statsGridRef = useRef<HTMLDivElement>(null);
   const weekCardRef = useRef<HTMLDivElement>(null);
   const calendarCardRef = useRef<HTMLDivElement>(null);
@@ -102,9 +106,44 @@ export default function ProgresoPage() {
     },
   ];
 
+  const handleShareStreak = async () => {
+    setSharing(true);
+    try {
+      const blob = await generateStreakShareCard({
+        displayName: profile?.displayName ?? "",
+        currentStreak: profile?.currentStreak ?? 0,
+        longestStreak: profile?.longestStreak ?? 0,
+        totalWorkouts: stats?.totalCount ?? 0,
+      });
+      if (!blob) {
+        toast.error("No se pudo generar la imagen");
+        return;
+      }
+      const result = await shareOrDownloadCard(blob, "mi-racha-evofit.png");
+      if (result === "downloaded") {
+        toast.success("Imagen descargada");
+      }
+    } catch {
+      toast.error("No se pudo generar la imagen");
+    } finally {
+      setSharing(false);
+    }
+  };
+
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>Tu progreso</h1>
+      <div className={styles.headerRow}>
+        <h1 className={styles.title}>Tu progreso</h1>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleShareStreak}
+          disabled={sharing}
+        >
+          <Share2 size={16} /> {sharing ? "Generando..." : "Compartir"}
+        </Button>
+      </div>
 
       <div className={styles.statsGrid} ref={statsGridRef}>
         <div className={styles.statCard}>
