@@ -23,6 +23,7 @@ import {
   DIET_BUDGETS,
   DIET_BUDGET_LABEL,
   DIET_MEAL_SLOT_LABEL,
+  CURRENT_SLOT_LABEL,
   DIET_PROTEIN_TYPES,
   DIET_PROTEIN_TYPE_LABEL,
   getCurrentMealSlot,
@@ -61,16 +62,17 @@ export default function DietaPage() {
   const [dietStyle, setDietStyle] = useState<DietStyle | null>(null);
   const [budget, setBudget] = useState<DietBudget | null>(null);
   const [currentMealSlot, setCurrentMealSlot] = useState<
-    "desayuno" | "comida" | "cena" | null
+    "desayuno" | "comida" | "cena" | "ayuno" | null
   >(null);
+  const fastingMode = profile?.fastingMode ?? false;
 
   useEffect(() => {
-    setCurrentMealSlot(getCurrentMealSlot(new Date()));
+    setCurrentMealSlot(getCurrentMealSlot(new Date(), fastingMode));
     const interval = setInterval(() => {
-      setCurrentMealSlot(getCurrentMealSlot(new Date()));
+      setCurrentMealSlot(getCurrentMealSlot(new Date(), fastingMode));
     }, 60_000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fastingMode]);
   const [activityLevel, setActivityLevel] = useState<ActivityLevel>("moderado");
   const [proteinPreferences, setProteinPreferences] = useState<DietProteinType[]>([]);
 
@@ -318,34 +320,45 @@ export default function DietaPage() {
 
           {currentMealSlot && (
             <p className={styles.currentMealNote}>
-              <Clock3 size={14} /> Ahorita te toca:{" "}
-              <strong>{DIET_MEAL_SLOT_LABEL[currentMealSlot]}</strong>
+              {currentMealSlot === "ayuno" ? (
+                <>
+                  <Clock3 size={14} /> Estás en tu ventana de{" "}
+                  <strong>ayuno</strong> — tu primera comida es al mediodía
+                </>
+              ) : (
+                <>
+                  <Clock3 size={14} /> Ahorita te toca:{" "}
+                  <strong>{CURRENT_SLOT_LABEL[currentMealSlot]}</strong>
+                </>
+              )}
             </p>
           )}
 
           <div className={styles.mealList}>
-            {plan.meals.map((meal) => {
-              const isCurrent = meal.mealSlot === currentMealSlot;
-              return (
-                <div
-                  key={meal.id}
-                  className={`${styles.mealCard} ${isCurrent ? styles.mealCardCurrent : ""}`}
-                >
-                  <div className={styles.mealSlotRow}>
-                    <p className={styles.mealSlot}>
-                      {DIET_MEAL_SLOT_LABEL[meal.mealSlot]}
+            {plan.meals
+              .filter((meal) => !(fastingMode && meal.mealSlot === "desayuno"))
+              .map((meal) => {
+                const isCurrent = meal.mealSlot === currentMealSlot;
+                return (
+                  <div
+                    key={meal.id}
+                    className={`${styles.mealCard} ${isCurrent ? styles.mealCardCurrent : ""}`}
+                  >
+                    <div className={styles.mealSlotRow}>
+                      <p className={styles.mealSlot}>
+                        {DIET_MEAL_SLOT_LABEL[meal.mealSlot]}
+                      </p>
+                      {isCurrent && <span className={styles.nowBadge}>Ahora</span>}
+                    </div>
+                    <p className={styles.mealName}>{meal.name}</p>
+                    <p className={styles.mealDescription}>{meal.description}</p>
+                    <p className={styles.mealMacros}>
+                      <Flame size={12} /> {meal.kcal} kcal · P {meal.proteinG}g · C{" "}
+                      {meal.carbsG}g · G {meal.fatG}g
                     </p>
-                    {isCurrent && <span className={styles.nowBadge}>Ahora</span>}
                   </div>
-                  <p className={styles.mealName}>{meal.name}</p>
-                  <p className={styles.mealDescription}>{meal.description}</p>
-                  <p className={styles.mealMacros}>
-                    <Flame size={12} /> {meal.kcal} kcal · P {meal.proteinG}g · C{" "}
-                    {meal.carbsG}g · G {meal.fatG}g
-                  </p>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
 
           <div className={styles.fieldRow}>

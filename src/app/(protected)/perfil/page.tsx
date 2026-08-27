@@ -47,6 +47,7 @@ import {
   useSaveBodyProfile,
   useMarkTutorialSeen,
   useUpdatePhotoAuthSettings,
+  useUpdateFastingMode,
   BODY_TYPE_LABEL,
   SEX_LABEL,
   type Profile,
@@ -106,6 +107,7 @@ export default function PerfilPage() {
   const resetProgressPhotos = useResetProgressPhotos();
   const markTutorialSeen = useMarkTutorialSeen("perfil");
   const updatePhotoAuthSettings = useUpdatePhotoAuthSettings();
+  const updateFastingMode = useUpdateFastingMode();
   const { theme, setTheme } = useTheme();
   const profile = data?.profile;
   const initial = profile?.displayName?.trim().charAt(0).toUpperCase() ?? "A";
@@ -895,6 +897,32 @@ export default function PerfilPage() {
               >
                 <RotateCcw size={14} /> Reiniciar fotos de evolución
               </Button>
+            </div>
+
+            <div className={styles.notificationsSection}>
+              <h3 className={styles.notificationsTitle}>Nutrición</h3>
+              <div className={styles.notificationRow}>
+                <div className={styles.notificationRowText}>
+                  <span className={styles.notificationRowLabel}>Modo ayuno</span>
+                  <span className={styles.notificationRowHint}>
+                    Oculta el desayuno; tu primera comida es la comida del
+                    mediodía
+                  </span>
+                </div>
+                <Switch
+                  checked={profile?.fastingMode ?? false}
+                  onCheckedChange={(checked) =>
+                    updateFastingMode.mutate(checked, {
+                      onSuccess: () =>
+                        toast.success(
+                          checked ? "Modo ayuno activado" : "Modo ayuno desactivado",
+                        ),
+                      onError: () => toast.error("No se pudo actualizar"),
+                    })
+                  }
+                  disabled={updateFastingMode.isPending}
+                />
+              </div>
             </div>
 
             <div className={styles.notificationsSection}>

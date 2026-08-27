@@ -58,6 +58,7 @@ export type Profile = {
   notifyDietReminder: boolean;
   requirePhotoAuth: boolean;
   photoAuthCredentialId: string | null;
+  fastingMode: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -87,6 +88,7 @@ type ProfileRow = {
   notify_diet_reminder: boolean;
   require_photo_auth: boolean;
   photo_auth_credential_id: string | null;
+  fasting_mode: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -117,6 +119,7 @@ function mapProfile(row: ProfileRow): Profile {
     notifyDietReminder: row.notify_diet_reminder,
     requirePhotoAuth: row.require_photo_auth,
     photoAuthCredentialId: row.photo_auth_credential_id,
+    fastingMode: row.fasting_mode,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -409,6 +412,30 @@ export const useUpdatePhotoAuthSettings = () => {
       const { error } = await supabase
         .from("profiles")
         .update(update)
+        .eq("id", user.id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["auth", "session"] });
+    },
+  });
+};
+
+// Modo ayuno: oculta el desayuno y ajusta la ventana de "qué me toca
+// comer ahora" — la persona hace ayuno intermitente y no desayuna.
+export const useUpdateFastingMode = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (fastingMode: boolean): Promise<void> => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("No autenticado");
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({ fasting_mode: fastingMode })
         .eq("id", user.id);
       if (error) throw new Error(error.message);
     },

@@ -11,6 +11,7 @@ import {
   RefreshCw,
   Check,
   CalendarDays,
+  Clock3,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import {
@@ -23,7 +24,7 @@ import { useWorkoutStats } from "@/hooks/useWorkoutCompletions";
 import { useWeeklyPlan } from "@/hooks/useWeeklyPlan";
 import { useWorkoutRoutines } from "@/hooks/useWorkoutRoutines";
 import { useUserRoutines } from "@/hooks/useUserRoutines";
-import { DIET_GOAL_LABEL, DIET_MEAL_SLOT_LABEL, getCurrentMealSlot } from "@/lib/diet";
+import { DIET_GOAL_LABEL, CURRENT_SLOT_LABEL, getCurrentMealSlot } from "@/lib/diet";
 import {
   computeDayRoutinePlan,
   DAY_ORDER,
@@ -54,16 +55,17 @@ export default function HomePage() {
   const planLinkRef = useRef<HTMLAnchorElement>(null);
   const dietCardRef = useRef<HTMLAnchorElement>(null);
   const [currentMealSlot, setCurrentMealSlot] = useState<
-    "desayuno" | "comida" | "cena" | null
+    "desayuno" | "comida" | "cena" | "ayuno" | null
   >(null);
+  const fastingMode = profile?.fastingMode ?? false;
 
   useEffect(() => {
-    setCurrentMealSlot(getCurrentMealSlot(new Date()));
+    setCurrentMealSlot(getCurrentMealSlot(new Date(), fastingMode));
     const interval = setInterval(() => {
-      setCurrentMealSlot(getCurrentMealSlot(new Date()));
+      setCurrentMealSlot(getCurrentMealSlot(new Date(), fastingMode));
     }, 60_000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fastingMode]);
 
   const trainedToday = profile?.lastActiveDate === todayStr();
 
@@ -222,10 +224,24 @@ export default function HomePage() {
 
       <Link href="/dieta" className={styles.dietCard} ref={dietCardRef}>
         <div className={styles.dietCardIcon}>
-          {dietPlan ? <RefreshCw size={26} /> : <Utensils size={26} />}
+          {currentMealSlot === "ayuno" ? (
+            <Clock3 size={26} />
+          ) : dietPlan ? (
+            <RefreshCw size={26} />
+          ) : (
+            <Utensils size={26} />
+          )}
         </div>
         <div className={styles.dietCardInfo}>
-          {dietPlan ? (
+          {currentMealSlot === "ayuno" ? (
+            <>
+              <p className={styles.dietCardEyebrow}>En ayuno</p>
+              <p className={styles.dietCardTitle}>Ventana de ayuno activa</p>
+              <p className={styles.dietCardSubtitle}>
+                Tu primera comida es al mediodía
+              </p>
+            </>
+          ) : dietPlan ? (
             (() => {
               const currentMeal = currentMealSlot
                 ? dietPlan.meals.find((m) => m.mealSlot === currentMealSlot)
@@ -234,7 +250,7 @@ export default function HomePage() {
                 <>
                   <p className={styles.dietCardEyebrow}>
                     {currentMealSlot
-                      ? `Te toca: ${DIET_MEAL_SLOT_LABEL[currentMealSlot]}`
+                      ? `Te toca: ${CURRENT_SLOT_LABEL[currentMealSlot]}`
                       : "Nutrición"}
                   </p>
                   {currentMeal ? (
