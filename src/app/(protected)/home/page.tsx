@@ -220,56 +220,9 @@ export default function HomePage() {
         )}
       </div>
 
-      {hasAnyPlan && (
-        <div className={styles.weekList}>
-          {weekRows.map(({ dayOfWeek, isToday, plan }) => {
-            const rowClassName = `${styles.weekRow} ${
-              isToday ? styles.weekRowToday : styles.weekRowDimmed
-            }`;
-            const rowContent = (
-              <>
-                <span className={styles.weekDay}>
-                  {DAY_OF_WEEK_SHORT[dayOfWeek]}
-                  {isToday && <span className={styles.weekTodayBadge}>Hoy</span>}
-                </span>
-                {plan ? (
-                  <span className={styles.weekInfo}>
-                    <span className={styles.weekFocus}>{plan.focusLabel}</span>
-                    <span className={styles.weekTitle}>
-                      {plan.title}
-                      {plan.plannedTime ? ` · ${plan.plannedTime}` : ""}
-                    </span>
-                  </span>
-                ) : (
-                  <span className={styles.weekRest}>Descanso</span>
-                )}
-              </>
-            );
-            return plan ? (
-              <Link key={dayOfWeek} href={plan.href} className={rowClassName}>
-                {rowContent}
-              </Link>
-            ) : (
-              <div key={dayOfWeek} className={rowClassName}>
-                {rowContent}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      <Link href="/plan" className={styles.planLink} ref={planLinkRef}>
-        <CalendarDays size={14} />
-        {hasAnyPlan ? "Editar tu plan semanal" : "Arma tu plan semanal"}
-      </Link>
-
-      <p className={styles.note}>
-        Cada entrenamiento que completes mantiene tu racha viva.
-      </p>
-
       <Link href="/dieta" className={styles.dietCard} ref={dietCardRef}>
         <div className={styles.dietCardIcon}>
-          {dietPlan ? <RefreshCw size={22} /> : <Utensils size={22} />}
+          {dietPlan ? <RefreshCw size={26} /> : <Utensils size={26} />}
         </div>
         <div className={styles.dietCardInfo}>
           {dietPlan ? (
@@ -315,7 +268,50 @@ export default function HomePage() {
             </>
           )}
         </div>
-        <ArrowRight size={18} className={styles.dietCardArrow} />
+        <ArrowRight size={22} className={styles.dietCardArrow} />
+      </Link>
+
+      {hasAnyPlan && (
+        <div className={styles.weekList}>
+          {weekRows.map(({ dayOfWeek, isToday, plan }) => {
+            const rowClassName = `${styles.weekRow} ${
+              isToday ? styles.weekRowToday : styles.weekRowDimmed
+            }`;
+            const rowContent = (
+              <>
+                <span className={styles.weekDay}>
+                  {DAY_OF_WEEK_SHORT[dayOfWeek]}
+                  {isToday && <span className={styles.weekTodayBadge}>Hoy</span>}
+                </span>
+                {plan ? (
+                  <span className={styles.weekInfo}>
+                    <span className={styles.weekFocus}>{plan.focusLabel}</span>
+                    <span className={styles.weekTitle}>
+                      {plan.title}
+                      {plan.plannedTime ? ` · ${plan.plannedTime}` : ""}
+                    </span>
+                  </span>
+                ) : (
+                  <span className={styles.weekRest}>Descanso</span>
+                )}
+              </>
+            );
+            return plan ? (
+              <Link key={dayOfWeek} href={plan.href} className={rowClassName}>
+                {rowContent}
+              </Link>
+            ) : (
+              <div key={dayOfWeek} className={rowClassName}>
+                {rowContent}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <Link href="/plan" className={styles.planLink} ref={planLinkRef}>
+        <CalendarDays size={14} />
+        {hasAnyPlan ? "Editar tu plan semanal" : "Arma tu plan semanal"}
       </Link>
 
       {tourOpen && (

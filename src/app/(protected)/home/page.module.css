@@ -254,23 +254,23 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-4);
-  padding: 1.1rem var(--spacing-5);
+  padding: 1.5rem var(--spacing-5);
   background: linear-gradient(
     135deg,
-    color-mix(in srgb, var(--secondary) 22%, var(--card)),
-    color-mix(in srgb, var(--accent) 16%, var(--card))
+    color-mix(in srgb, var(--secondary) 30%, var(--card)),
+    color-mix(in srgb, var(--accent) 24%, var(--card))
   );
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid color-mix(in srgb, var(--secondary) 35%, var(--border));
+  border: 1.5px solid color-mix(in srgb, var(--secondary) 45%, var(--border));
   border-radius: var(--radius-lg);
   text-decoration: none;
-  box-shadow: 0 10px 30px color-mix(in srgb, var(--secondary) 18%, transparent);
+  box-shadow: 0 14px 36px color-mix(in srgb, var(--secondary) 26%, transparent);
   transition: border-color var(--animation-duration-fast) ease, transform var(--animation-duration-fast) ease;
 }
 
 .dietCard:hover {
-  border-color: color-mix(in srgb, var(--secondary) 55%, var(--border));
+  border-color: color-mix(in srgb, var(--secondary) 65%, var(--border));
   transform: translateY(-1px);
 }
 
@@ -278,11 +278,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 3.25rem;
-  height: 3.25rem;
+  width: 3.75rem;
+  height: 3.75rem;
   flex-shrink: 0;
   border-radius: var(--radius-full);
-  background: color-mix(in srgb, var(--secondary) 30%, var(--card));
+  background: color-mix(in srgb, var(--secondary) 35%, var(--card));
   color: var(--secondary);
 }
 
@@ -294,24 +294,24 @@
 .dietCardEyebrow {
   margin: 0 0 var(--spacing-1);
   color: var(--secondary);
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 700;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
 }
 
 .dietCardTitle {
   margin: 0;
   font-family: var(--font-family-display);
   font-weight: 700;
-  font-size: 0.98rem;
+  font-size: 1.1rem;
   color: var(--foreground);
 }
 
 .dietCardSubtitle {
   margin: var(--spacing-1) 0 0;
   color: var(--muted-foreground);
-  font-size: 0.78rem;
+  font-size: 0.82rem;
 }
 
 .dietCardArrow {
