@@ -38,7 +38,7 @@ const signupSchema = z
   });
 
 export default function AuthPage() {
-  const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
+  const [activeTab, setActiveTab] = useState<"login" | "signup">("signup");
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showSignupPassword, setShowSignupPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -124,11 +124,11 @@ export default function AuthPage() {
           className={styles.tabs}
         >
           <TabsList className={styles.tabsList}>
-            <TabsTrigger value="login" className={styles.tabsTrigger}>
-              Iniciar sesión
-            </TabsTrigger>
             <TabsTrigger value="signup" className={styles.tabsTrigger}>
               Crear cuenta
+            </TabsTrigger>
+            <TabsTrigger value="login" className={styles.tabsTrigger}>
+              Iniciar sesión
             </TabsTrigger>
           </TabsList>
 
