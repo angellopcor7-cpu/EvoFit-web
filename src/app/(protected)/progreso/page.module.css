@@ -21,6 +21,73 @@
   gap: var(--spacing-3);
 }
 
+.shareOptions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.shareOption {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  width: 100%;
+  padding: var(--spacing-3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--animation-duration-fast) ease;
+}
+
+.shareOption:hover:not(:disabled) {
+  border-color: var(--primary);
+}
+
+.shareOption:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.shareOptionIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--primary) 15%, transparent);
+  color: var(--primary);
+}
+
+.shareOptionText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.shareOptionTitle {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--foreground);
+}
+
+.shareOptionSubtitle {
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shareOptionLoading {
+  color: var(--primary);
+  font-weight: 700;
+}
+
 .statsGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

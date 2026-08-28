@@ -1,15 +1,29 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Flame, Dumbbell, TrendingUp, CalendarDays, Share2 } from "lucide-react";
+import { Flame, Dumbbell, TrendingUp, CalendarDays, Share2, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthSession, useMarkTutorialSeen } from "@/hooks/useProfile";
 import { useWorkoutStats } from "@/hooks/useWorkoutCompletions";
+import { useGoals } from "@/hooks/useGoals";
+import { formatCompletedDate, formatTimeToComplete } from "@/lib/goals";
 import { Progress } from "@/components/ui/Progress";
 import { Button } from "@/components/ui/Button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/Dialog";
 import { SpotlightTour, type TourStep } from "@/components/SpotlightTour";
 import { WORKOUT_CATEGORY_LABEL } from "@/lib/workouts";
-import { generateStreakShareCard, shareOrDownloadCard } from "@/lib/shareCard";
+import {
+  generateStreakShareCard,
+  generateWeeklyShareCard,
+  generateGoalShareCard,
+  shareOrDownloadCard,
+} from "@/lib/shareCard";
 import styles from "./page.module.css";
 
 function relativeDate(iso: string): string {
@@ -45,11 +59,13 @@ export default function ProgresoPage() {
   const { data } = useAuthSession();
   const profile = data?.profile;
   const { data: stats, isLoading } = useWorkoutStats();
+  const { data: goalsData } = useGoals();
   const markTutorialSeen = useMarkTutorialSeen("progreso");
 
   const [tourOpen, setTourOpen] = useState(false);
   const [tourDismissedThisVisit, setTourDismissedThisVisit] = useState(false);
-  const [sharing, setSharing] = useState(false);
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [sharingVariant, setSharingVariant] = useState<string | null>(null);
   const statsGridRef = useRef<HTMLDivElement>(null);
   const weekCardRef = useRef<HTMLDivElement>(null);
   const calendarCardRef = useRef<HTMLDivElement>(null);
@@ -106,28 +122,90 @@ export default function ProgresoPage() {
     },
   ];
 
-  const handleShareStreak = async () => {
-    setSharing(true);
+  const completedGoals = (goalsData?.goals ?? []).filter((g) => g.completedAt);
+  const mostRecentCompletedGoal = completedGoals.length
+    ? [...completedGoals].sort(
+        (a, b) => new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime(),
+      )[0]
+    : null;
+
+  const runShare = async (
+    variant: "racha" | "semana" | "meta",
+    generate: () => Promise<Blob | null>,
+    filename: string,
+    shareText: string,
+  ) => {
+    setSharingVariant(variant);
     try {
-      const blob = await generateStreakShareCard({
-        displayName: profile?.displayName ?? "",
-        currentStreak: profile?.currentStreak ?? 0,
-        longestStreak: profile?.longestStreak ?? 0,
-        totalWorkouts: stats?.totalCount ?? 0,
-      });
+      const blob = await generate();
       if (!blob) {
         toast.error("No se pudo generar la imagen");
         return;
       }
-      const result = await shareOrDownloadCard(blob, "mi-racha-evofit.png");
+      const result = await shareOrDownloadCard(blob, filename, shareText);
       if (result === "downloaded") {
         toast.success("Imagen descargada");
+      }
+      if (result !== "cancelled") {
+        setShareMenuOpen(false);
       }
     } catch {
       toast.error("No se pudo generar la imagen");
     } finally {
-      setSharing(false);
+      setSharingVariant(null);
     }
+  };
+
+  const handleShareStreak = () =>
+    runShare(
+      "racha",
+      () =>
+        generateStreakShareCard({
+          displayName: profile?.displayName ?? "",
+          currentStreak: profile?.currentStreak ?? 0,
+          longestStreak: profile?.longestStreak ?? 0,
+          totalWorkouts: stats?.totalCount ?? 0,
+        }),
+      "mi-racha-evofit.png",
+      "Mira mi racha de entrenamiento en EvoFit 🔥",
+    );
+
+  const handleShareWeek = () =>
+    runShare(
+      "semana",
+      () =>
+        generateWeeklyShareCard({
+          displayName: profile?.displayName ?? "",
+          days: last7Days.map((d) => ({
+            label: new Date(`${d.date}T00:00:00`).toLocaleDateString("es-MX", {
+              weekday: "short",
+            }),
+            count: d.count,
+            isToday: d.isToday,
+          })),
+          totalThisWeek: last7Days.reduce((sum, d) => sum + d.count, 0),
+        }),
+      "mi-semana-evofit.png",
+      "Mira mi semana de entrenamiento en EvoFit 💪",
+    );
+
+  const handleShareGoal = () => {
+    if (!mostRecentCompletedGoal) return;
+    const goal = mostRecentCompletedGoal;
+    return runShare(
+      "meta",
+      () =>
+        generateGoalShareCard({
+          displayName: profile?.displayName ?? "",
+          title: goal.title,
+          targetValue: goal.targetValue,
+          unit: goal.unit,
+          completedDateLabel: formatCompletedDate(goal.completedAt!),
+          timeToCompleteLabel: formatTimeToComplete(goal.createdAt, goal.completedAt!),
+        }),
+      "mi-meta-evofit.png",
+      `¡Cumplí mi meta "${goal.title}" en EvoFit! 🎉`,
+    );
   };
 
   return (
@@ -138,10 +216,9 @@ export default function ProgresoPage() {
           type="button"
           variant="outline"
           size="sm"
-          onClick={handleShareStreak}
-          disabled={sharing}
+          onClick={() => setShareMenuOpen(true)}
         >
-          <Share2 size={16} /> {sharing ? "Generando..." : "Compartir"}
+          <Share2 size={16} /> Compartir
         </Button>
       </div>
 
@@ -267,6 +344,80 @@ export default function ProgresoPage() {
           Completa entrenamientos para ver aquí tu evolución real.
         </p>
       )}
+
+      <Dialog open={shareMenuOpen} onOpenChange={setShareMenuOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Elige qué compartir</DialogTitle>
+            <DialogDescription>
+              Genera una imagen lista para compartir en tus redes.
+            </DialogDescription>
+          </DialogHeader>
+          <div className={styles.shareOptions}>
+            <button
+              type="button"
+              className={styles.shareOption}
+              onClick={handleShareStreak}
+              disabled={sharingVariant !== null}
+            >
+              <span className={styles.shareOptionIcon}>
+                <Flame size={20} />
+              </span>
+              <span className={styles.shareOptionText}>
+                <span className={styles.shareOptionTitle}>Racha actual</span>
+                <span className={styles.shareOptionSubtitle}>
+                  {profile?.currentStreak ?? 0} días — tu número grande
+                </span>
+              </span>
+              {sharingVariant === "racha" && (
+                <span className={styles.shareOptionLoading}>...</span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              className={styles.shareOption}
+              onClick={handleShareWeek}
+              disabled={sharingVariant !== null}
+            >
+              <span className={styles.shareOptionIcon}>
+                <CalendarDays size={20} />
+              </span>
+              <span className={styles.shareOptionText}>
+                <span className={styles.shareOptionTitle}>Resumen semanal</span>
+                <span className={styles.shareOptionSubtitle}>
+                  Tu gráfica de lunes a domingo
+                </span>
+              </span>
+              {sharingVariant === "semana" && (
+                <span className={styles.shareOptionLoading}>...</span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              className={styles.shareOption}
+              onClick={handleShareGoal}
+              disabled={sharingVariant !== null || !mostRecentCompletedGoal}
+            >
+              <span className={styles.shareOptionIcon}>
+                <Trophy size={20} />
+              </span>
+              <span className={styles.shareOptionText}>
+                <span className={styles.shareOptionTitle}>Meta cumplida</span>
+                <span className={styles.shareOptionSubtitle}>
+                  {mostRecentCompletedGoal
+                    ? mostRecentCompletedGoal.title
+                    : "Aún no tienes ninguna meta cumplida"}
+                </span>
+              </span>
+              {sharingVariant === "meta" && (
+                <span className={styles.shareOptionLoading}>...</span>
+              )}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {tourOpen && (
         <SpotlightTour
