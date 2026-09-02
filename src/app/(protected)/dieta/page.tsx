@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, RefreshCw, Flame, Beef, Wheat, Droplet, ShieldAlert, Clock3, ShoppingCart, ChefHat } from "lucide-react";
+import { ArrowLeft, RefreshCw, Flame, Beef, Wheat, Droplet, ShieldAlert, Clock3, ShoppingCart, ChefHat, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
@@ -68,6 +68,29 @@ export default function DietaPage() {
   const [shoppingListOpen, setShoppingListOpen] = useState(false);
   const [expandedPrepIds, setExpandedPrepIds] = useState<Set<string>>(new Set());
   const isSunday = new Date().getDay() === 0;
+
+  const handleShareShoppingList = async () => {
+    const items = shoppingListData?.items ?? [];
+    if (items.length === 0) return;
+    const text =
+      "🛒 Lista de compras de la semana — EvoFit\n\n" +
+      items.map((item) => `• ${item.name}${item.amount ? ` (${item.amount})` : ""}`).join("\n");
+
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ title: "Lista de compras — EvoFit", text });
+        return;
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Lista copiada al portapapeles");
+    } catch {
+      // sin más opciones disponibles
+    }
+  };
 
   const [step, setStep] = useState<Step | null>(null);
   const [goal, setGoal] = useState<DietGoal | null>(null);
@@ -473,9 +496,19 @@ export default function DietaPage() {
       <Dialog open={shoppingListOpen} onOpenChange={setShoppingListOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className={styles.shoppingListTitle}>
-              <ShoppingCart size={18} /> Lista de compras de la semana
-            </DialogTitle>
+            <div className={styles.shoppingListHeaderRow}>
+              <DialogTitle className={styles.shoppingListTitle}>
+                <ShoppingCart size={18} /> Lista de compras de la semana
+              </DialogTitle>
+              <button
+                type="button"
+                className={styles.shoppingListShareButton}
+                onClick={handleShareShoppingList}
+                aria-label="Compartir lista de compras"
+              >
+                <Share2 size={16} />
+              </button>
+            </div>
             <DialogDescription>
               Ingredientes de todas tus comidas de domingo a sábado, ya
               sumados cuando se repiten.

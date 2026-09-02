@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import {
   Flame,
   TrendingUp,
@@ -14,6 +15,7 @@ import {
   Clock3,
   ShoppingCart,
   ChevronRight,
+  Share2,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import {
@@ -69,7 +71,6 @@ export default function HomePage() {
   const statsCardRef = useRef<HTMLDivElement>(null);
   const ctaCardRef = useRef<HTMLDivElement>(null);
   const planLinkRef = useRef<HTMLAnchorElement>(null);
-  const dietCardRef = useRef<HTMLAnchorElement>(null);
   const mealsWeekRef = useRef<HTMLDivElement>(null);
   const [shoppingListOpen, setShoppingListOpen] = useState(false);
   const [currentMealSlot, setCurrentMealSlot] = useState<
@@ -159,6 +160,29 @@ export default function HomePage() {
     markHomeTutorialSeen.mutate();
   };
 
+  const handleShareShoppingList = async () => {
+    const items = shoppingListData?.items ?? [];
+    if (items.length === 0) return;
+    const text =
+      "🛒 Lista de compras de la semana — EvoFit\n\n" +
+      items.map((item) => `• ${item.name}${item.amount ? ` (${item.amount})` : ""}`).join("\n");
+
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ title: "Lista de compras — EvoFit", text });
+        return;
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Lista copiada al portapapeles");
+    } catch {
+      // sin más opciones disponibles
+    }
+  };
+
   const tourSteps: TourStep[] = [
     {
       ref: statsCardRef,
@@ -179,10 +203,10 @@ export default function HomePage() {
         "Aquí armas o editas qué rutina te toca cada día de la semana, para que aparezca aquí automáticamente.",
     },
     {
-      ref: dietCardRef,
+      ref: mealsWeekRef,
       title: "Tu nutrición",
       description:
-        "Aquí armas tu plan de alimentación o revisas tu menú y macros del día.",
+        "Aquí ves tu menú de la semana. Toca el carrito para ver tu lista de compras con todos los ingredientes.",
     },
   ];
 
@@ -266,124 +290,6 @@ export default function HomePage() {
         )}
       </div>
 
-      <Link href="/dieta" className={styles.dietCard} ref={dietCardRef}>
-        <div className={styles.dietCardIcon}>
-          {currentMealSlot === "ayuno" ? (
-            <Clock3 size={26} />
-          ) : dietPlan ? (
-            <RefreshCw size={26} />
-          ) : (
-            <Utensils size={26} />
-          )}
-        </div>
-        <div className={styles.dietCardInfo}>
-          {currentMealSlot === "ayuno" ? (
-            <>
-              <p className={styles.dietCardEyebrow}>En ayuno</p>
-              <p className={styles.dietCardTitle}>Ventana de ayuno activa</p>
-              <p className={styles.dietCardSubtitle}>
-                Tu primera comida es a las {fastingEndTime}
-              </p>
-            </>
-          ) : dietPlan ? (
-            (() => {
-              const currentMeal = currentMealSlot
-                ? dietPlan.meals.find((m) => m.mealSlot === currentMealSlot)
-                : null;
-              return (
-                <>
-                  <p className={styles.dietCardEyebrow}>
-                    {currentMealSlot
-                      ? `Te toca: ${CURRENT_SLOT_LABEL[currentMealSlot]}`
-                      : "Nutrición"}
-                  </p>
-                  {currentMeal ? (
-                    <>
-                      <p className={styles.dietCardTitle}>{currentMeal.name}</p>
-                      <p className={styles.dietCardSubtitle}>
-                        {currentMeal.kcal} kcal · P {currentMeal.proteinG}g · C{" "}
-                        {currentMeal.carbsG}g · G {currentMeal.fatG}g
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <p className={styles.dietCardTitle}>
-                        {DIET_GOAL_LABEL[dietPlan.goal]} · {dietPlan.targetKcal} kcal/día
-                      </p>
-                      <p className={styles.dietCardSubtitle}>
-                        Ver tu menú de hoy y macros
-                      </p>
-                    </>
-                  )}
-                </>
-              );
-            })()
-          ) : (
-            <>
-              <p className={styles.dietCardEyebrow}>Nutrición</p>
-              <p className={styles.dietCardTitle}>Arma tu dieta</p>
-              <p className={styles.dietCardSubtitle}>
-                Calcula tus calorías y macros con un menú real
-              </p>
-            </>
-          )}
-        </div>
-        <ArrowRight size={22} className={styles.dietCardArrow} />
-      </Link>
-
-      {shoppingListData && shoppingListData.items.length > 0 && (
-        <button
-          type="button"
-          className={styles.shoppingCard}
-          onClick={() => setShoppingListOpen(true)}
-        >
-          <div className={styles.shoppingCardIcon}>
-            <ShoppingCart size={22} />
-          </div>
-          <div className={styles.shoppingCardInfo}>
-            <p className={styles.shoppingCardEyebrow}>Lista de compras</p>
-            <p className={styles.shoppingCardTitle}>
-              {shoppingListData.items.length} ingredientes esta semana
-            </p>
-            <p className={styles.shoppingCardSubtitle}>
-              De domingo a sábado — toca para verla
-            </p>
-          </div>
-          <ChevronRight size={20} className={styles.shoppingCardArrow} />
-        </button>
-      )}
-
-      {weeklyMeals.length > 0 && (
-        <div className={styles.mealsWeekSection} ref={mealsWeekRef}>
-          <p className={styles.mealsWeekTitle}>Tu semana de comidas</p>
-          <div className={styles.mealsWeekList}>
-            {mealsWeekRows.map(({ dayOfWeek, isToday, meals }) => (
-              <div
-                key={dayOfWeek}
-                className={`${styles.mealsWeekRow} ${
-                  isToday ? styles.mealsWeekRowToday : styles.mealsWeekRowDimmed
-                }`}
-              >
-                <span className={styles.mealsWeekDay}>
-                  {DAY_OF_WEEK_SHORT[dayOfWeek]}
-                  {isToday && <span className={styles.weekTodayBadge}>Hoy</span>}
-                </span>
-                <span className={styles.mealsWeekDishes}>
-                  {meals.map((m) => (
-                    <span key={m.id} className={styles.mealsWeekDish}>
-                      <span className={styles.mealsWeekSlotLabel}>
-                        {DIET_MEAL_SLOT_LABEL[m.mealSlot]}:
-                      </span>{" "}
-                      {m.name}
-                    </span>
-                  ))}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {hasAnyPlan && (
         <div className={styles.weekList}>
           {weekRows.map(({ dayOfWeek, isToday, plan }) => {
@@ -427,6 +333,49 @@ export default function HomePage() {
         {hasAnyPlan ? "Editar tu plan semanal" : "Arma tu plan semanal"}
       </Link>
 
+      {weeklyMeals.length > 0 && (
+        <div className={styles.mealsWeekSection} ref={mealsWeekRef}>
+          <div className={styles.mealsWeekHeader}>
+            <p className={styles.mealsWeekTitle}>Tu semana de comidas</p>
+            {shoppingListData && shoppingListData.items.length > 0 && (
+              <button
+                type="button"
+                className={styles.shoppingIconButton}
+                onClick={() => setShoppingListOpen(true)}
+                aria-label="Ver lista de compras"
+              >
+                <ShoppingCart size={16} />
+              </button>
+            )}
+          </div>
+          <div className={styles.mealsWeekList}>
+            {mealsWeekRows.map(({ dayOfWeek, isToday, meals }) => (
+              <div
+                key={dayOfWeek}
+                className={`${styles.mealsWeekRow} ${
+                  isToday ? styles.mealsWeekRowToday : styles.mealsWeekRowDimmed
+                }`}
+              >
+                <span className={styles.mealsWeekDay}>
+                  {DAY_OF_WEEK_SHORT[dayOfWeek]}
+                  {isToday && <span className={styles.weekTodayBadge}>Hoy</span>}
+                </span>
+                <span className={styles.mealsWeekDishes}>
+                  {meals.map((m) => (
+                    <span key={m.id} className={styles.mealsWeekDish}>
+                      <span className={styles.mealsWeekSlotLabel}>
+                        {DIET_MEAL_SLOT_LABEL[m.mealSlot]}:
+                      </span>{" "}
+                      {m.name}
+                    </span>
+                  ))}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {tourOpen && (
         <SpotlightTour
           steps={tourSteps}
@@ -438,9 +387,19 @@ export default function HomePage() {
       <Dialog open={shoppingListOpen} onOpenChange={setShoppingListOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className={styles.shoppingListDialogTitle}>
-              <ShoppingCart size={18} /> Lista de compras de la semana
-            </DialogTitle>
+            <div className={styles.shoppingListDialogHeaderRow}>
+              <DialogTitle className={styles.shoppingListDialogTitle}>
+                <ShoppingCart size={18} /> Lista de compras de la semana
+              </DialogTitle>
+              <button
+                type="button"
+                className={styles.shoppingListShareButton}
+                onClick={handleShareShoppingList}
+                aria-label="Compartir lista de compras"
+              >
+                <Share2 size={16} />
+              </button>
+            </div>
             <DialogDescription>
               Ingredientes de todas tus comidas de domingo a sábado.
             </DialogDescription>
