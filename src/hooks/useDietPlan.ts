@@ -9,7 +9,12 @@ import {
   type DietStyle,
   type DietBudget,
   type DietProteinType,
+  type WeeklyDietMeal,
+  type WeeklyDietMealRow,
+  type ShoppingListItem,
   mapDietPlanRow,
+  mapWeeklyDietMealRow,
+  buildShoppingList,
 } from "@/lib/diet";
 import type { ActivityLevel, Sex } from "@/lib/dietCalculations";
 
@@ -82,6 +87,42 @@ export const useRegenerateDietPlan = () => {
       postJson<{ plan: DietPlan }>("/api/diet-plans/regenerate", input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: SHOPPING_LIST_QUERY_KEY });
+    },
+  });
+};
+
+const SHOPPING_LIST_QUERY_KEY = ["dietPlans", "shoppingList"];
+
+// Lista de compras de la semana activa: junta los ingredientes de las 7
+// comidas × slots que ya se generaron para domingo-sábado.
+export const useWeeklyShoppingList = (planId: string | undefined) => {
+  return useQuery({
+    queryKey: [...SHOPPING_LIST_QUERY_KEY, planId],
+    enabled: !!planId,
+    queryFn: async (): Promise<{
+      weekStartDate: string | null;
+      items: ShoppingListItem[];
+      meals: WeeklyDietMeal[];
+    }> => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user || !planId) return { weekStartDate: null, items: [], meals: [] };
+
+      const { data, error } = await supabase
+        .from("user_weekly_diet_meals")
+        .select("*")
+        .eq("user_diet_plan_id", planId)
+        .eq("user_id", user.id)
+        .order("day_of_week", { ascending: true })
+        .order("order_index", { ascending: true });
+      if (error) throw new Error(error.message);
+
+      const meals = ((data ?? []) as WeeklyDietMealRow[]).map(mapWeeklyDietMealRow);
+      const weekStartDate = (data ?? [])[0]?.week_start_date ?? null;
+      return { weekStartDate, items: buildShoppingList(meals), meals };
     },
   });
 };

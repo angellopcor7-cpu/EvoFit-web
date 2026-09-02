@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, RefreshCw, Flame, Beef, Wheat, Droplet, ShieldAlert, Clock3 } from "lucide-react";
+import { ArrowLeft, RefreshCw, Flame, Beef, Wheat, Droplet, ShieldAlert, Clock3, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
@@ -13,8 +13,15 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/Select";
-import { useDietPlan, useCreateDietPlan, useRegenerateDietPlan } from "@/hooks/useDietPlan";
+import { useDietPlan, useCreateDietPlan, useRegenerateDietPlan, useWeeklyShoppingList } from "@/hooks/useDietPlan";
 import { useAuthSession } from "@/hooks/useProfile";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/Dialog";
 import {
   DIET_GOALS,
   DIET_GOAL_LABEL,
@@ -27,6 +34,7 @@ import {
   DIET_PROTEIN_TYPES,
   DIET_PROTEIN_TYPE_LABEL,
   getCurrentMealSlot,
+  getWeekStartDate,
   type DietGoal,
   type DietStyle,
   type DietBudget,
@@ -56,6 +64,9 @@ export default function DietaPage() {
   const regeneratePlan = useRegenerateDietPlan();
   const profile = sessionData?.profile ?? null;
   const allergies = profile?.allergies?.trim() || null;
+  const { data: shoppingListData } = useWeeklyShoppingList(data?.plan?.id);
+  const [shoppingListOpen, setShoppingListOpen] = useState(false);
+  const isSunday = new Date().getDay() === 0;
 
   const [step, setStep] = useState<Step | null>(null);
   const [goal, setGoal] = useState<DietGoal | null>(null);
@@ -83,16 +94,16 @@ export default function DietaPage() {
     }
   }, [data, step]);
 
-  // Cada día, al abrir la pantalla, se regenera el menú automáticamente para
-  // variar las comidas — solo si todavía no se regeneró hoy.
+  // Cada semana (domingo), al abrir la pantalla, se regenera el menú
+  // completo automáticamente — solo si todavía no se regeneró esta semana.
   useEffect(() => {
     const plan = data?.plan;
     if (!plan) return;
-    const todayUtc = new Date().toISOString().slice(0, 10);
-    if (plan.mealsGeneratedOn === todayUtc) return;
+    const currentWeekStart = getWeekStartDate(new Date());
+    if (plan.weekStartDate === currentWeekStart) return;
     regeneratePlan.mutate({ proteinPreferences: plan.proteinPreferences });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data?.plan?.id, data?.plan?.mealsGeneratedOn]);
+  }, [data?.plan?.id, data?.plan?.weekStartDate]);
 
   const toggleProtein = (protein: DietProteinType) => {
     setProteinPreferences((prev) =>
@@ -336,6 +347,24 @@ export default function DietaPage() {
             </p>
           )}
 
+          {shoppingListData && shoppingListData.items.length > 0 && (
+            <button
+              type="button"
+              className={`${styles.shoppingListBanner} ${isSunday ? styles.shoppingListBannerSunday : ""}`}
+              onClick={() => setShoppingListOpen(true)}
+            >
+              <ShoppingCart size={18} />
+              <span className={styles.shoppingListBannerText}>
+                <span className={styles.shoppingListBannerTitle}>
+                  {isSunday ? "¡Nueva semana! Tu lista de compras" : "Lista de compras de la semana"}
+                </span>
+                <span className={styles.shoppingListBannerSubtitle}>
+                  {shoppingListData.items.length} ingredientes para tus comidas de domingo a sábado
+                </span>
+              </span>
+            </button>
+          )}
+
           <div className={styles.mealList}>
             {plan.meals
               .filter((meal) => !(fastingMode && meal.mealSlot === "desayuno"))
@@ -411,6 +440,28 @@ export default function DietaPage() {
           </button>
         </div>
       )}
+
+      <Dialog open={shoppingListOpen} onOpenChange={setShoppingListOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className={styles.shoppingListTitle}>
+              <ShoppingCart size={18} /> Lista de compras de la semana
+            </DialogTitle>
+            <DialogDescription>
+              Ingredientes de todas tus comidas de domingo a sábado, ya
+              sumados cuando se repiten.
+            </DialogDescription>
+          </DialogHeader>
+          <div className={styles.shoppingListItems}>
+            {(shoppingListData?.items ?? []).map((item) => (
+              <div key={item.name} className={styles.shoppingListItem}>
+                <span className={styles.shoppingListItemName}>{item.name}</span>
+                <span className={styles.shoppingListItemAmount}>{item.amount}</span>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

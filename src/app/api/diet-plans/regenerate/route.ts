@@ -7,7 +7,8 @@ import {
   type DietPlanRow,
   mapMealOptionRow,
   mapDietPlanRow,
-  pickMealsForPlan,
+  pickWeeklyMealsForPlan,
+  getWeekStartDate,
   parseAllergyTerms,
 } from "@/lib/diet";
 
@@ -64,13 +65,15 @@ export async function POST(request: Request) {
     const options = ((optionRows ?? []) as DietMealOptionRow[]).map(
       mapMealOptionRow,
     );
-    const excludeNames = existing.meals.map((m) => m.name);
-    const meals = pickMealsForPlan(
+    const weeklyMeals = pickWeeklyMealsForPlan(
       options,
       proteinPreferences,
-      excludeNames,
       allergyTerms,
     );
+    const today = new Date();
+    const weekStartDate = getWeekStartDate(today);
+    const todayDow = today.getDay();
+    const todaysMeals = weeklyMeals.filter((m) => m.dayOfWeek === todayDow);
 
     const { error: deleteError } = await supabase
       .from("user_diet_plan_meals")
@@ -78,10 +81,16 @@ export async function POST(request: Request) {
       .eq("user_diet_plan_id", existing.id);
     if (deleteError) throw new Error(deleteError.message);
 
+    const { error: deleteWeeklyError } = await supabase
+      .from("user_weekly_diet_meals")
+      .delete()
+      .eq("user_diet_plan_id", existing.id);
+    if (deleteWeeklyError) throw new Error(deleteWeeklyError.message);
+
     const { data: mealRows, error: insertError } = await supabase
       .from("user_diet_plan_meals")
       .insert(
-        meals.map((meal) => ({
+        todaysMeals.map((meal) => ({
           user_diet_plan_id: existing.id,
           meal_slot: meal.mealSlot,
           order_index: meal.orderIndex,
@@ -96,13 +105,35 @@ export async function POST(request: Request) {
       .select();
     if (insertError) throw new Error(insertError.message);
 
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const { error: weeklyInsertError } = await supabase
+      .from("user_weekly_diet_meals")
+      .insert(
+        weeklyMeals.map((meal) => ({
+          user_diet_plan_id: existing.id,
+          user_id: user.id,
+          week_start_date: weekStartDate,
+          day_of_week: meal.dayOfWeek,
+          meal_slot: meal.mealSlot,
+          order_index: meal.orderIndex,
+          name: meal.name,
+          description: meal.description,
+          kcal: meal.kcal,
+          protein_g: meal.proteinG,
+          carbs_g: meal.carbsG,
+          fat_g: meal.fatG,
+          ingredients: meal.ingredients,
+        })),
+      );
+    if (weeklyInsertError) throw new Error(weeklyInsertError.message);
+
+    const todayStr = today.toISOString().slice(0, 10);
     await supabase
       .from("user_diet_plans")
       .update({
         updated_at: new Date().toISOString(),
         protein_preferences: proteinPreferences,
         meals_generated_on: todayStr,
+        week_start_date: weekStartDate,
       })
       .eq("id", existing.id);
 
@@ -112,6 +143,7 @@ export async function POST(request: Request) {
         updatedAt: new Date().toISOString(),
         proteinPreferences,
         mealsGeneratedOn: todayStr,
+        weekStartDate,
         meals: (mealRows ?? [])
           .sort((a, b) => a.order_index - b.order_index)
           .map((m) => ({

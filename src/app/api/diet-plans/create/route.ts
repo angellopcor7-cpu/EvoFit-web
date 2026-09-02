@@ -9,7 +9,8 @@ import {
   DIET_MEAL_SLOTS,
   type DietMealOptionRow,
   mapMealOptionRow,
-  pickMealsForPlan,
+  pickWeeklyMealsForPlan,
+  getWeekStartDate,
   parseAllergyTerms,
 } from "@/lib/diet";
 import { ACTIVITY_LEVELS, SEX_OPTIONS, calculateDietTargets } from "@/lib/dietCalculations";
@@ -61,12 +62,15 @@ export async function POST(request: Request) {
     const options = ((optionRows ?? []) as DietMealOptionRow[]).map(
       mapMealOptionRow,
     );
-    const meals = pickMealsForPlan(
+    const weeklyMeals = pickWeeklyMealsForPlan(
       options,
       input.proteinPreferences,
-      [],
       allergyTerms,
     );
+    const today = new Date();
+    const weekStartDate = getWeekStartDate(today);
+    const todayDow = today.getDay();
+    const todaysMeals = weeklyMeals.filter((m) => m.dayOfWeek === todayDow);
 
     // Solo un plan activo por usuario: se borra el anterior (cascada a sus comidas).
     await supabase.from("user_diet_plans").delete().eq("user_id", user.id);
@@ -84,6 +88,8 @@ export async function POST(request: Request) {
         target_fat_g: targets.targetFatG,
         meals_per_day: DIET_MEAL_SLOTS.length,
         protein_preferences: input.proteinPreferences,
+        week_start_date: weekStartDate,
+        meals_generated_on: today.toISOString().slice(0, 10),
       })
       .select()
       .single();
@@ -96,7 +102,7 @@ export async function POST(request: Request) {
     const { data: mealRows, error: mealsError } = await supabase
       .from("user_diet_plan_meals")
       .insert(
-        meals.map((meal) => ({
+        todaysMeals.map((meal) => ({
           user_diet_plan_id: planRow.id,
           meal_slot: meal.mealSlot,
           order_index: meal.orderIndex,
@@ -110,6 +116,27 @@ export async function POST(request: Request) {
       )
       .select();
     if (mealsError) throw new Error(mealsError.message);
+
+    const { error: weeklyError } = await supabase
+      .from("user_weekly_diet_meals")
+      .insert(
+        weeklyMeals.map((meal) => ({
+          user_diet_plan_id: planRow.id,
+          user_id: user.id,
+          week_start_date: weekStartDate,
+          day_of_week: meal.dayOfWeek,
+          meal_slot: meal.mealSlot,
+          order_index: meal.orderIndex,
+          name: meal.name,
+          description: meal.description,
+          kcal: meal.kcal,
+          protein_g: meal.proteinG,
+          carbs_g: meal.carbsG,
+          fat_g: meal.fatG,
+          ingredients: meal.ingredients,
+        })),
+      );
+    if (weeklyError) throw new Error(weeklyError.message);
 
     return NextResponse.json({
       plan: {
@@ -126,6 +153,7 @@ export async function POST(request: Request) {
         updatedAt: planRow.updated_at,
         proteinPreferences: planRow.protein_preferences,
         mealsGeneratedOn: planRow.meals_generated_on,
+        weekStartDate: planRow.week_start_date,
         meals: (mealRows ?? [])
           .sort((a, b) => a.order_index - b.order_index)
           .map((m) => ({

@@ -279,3 +279,87 @@
   cursor: pointer;
   padding: var(--spacing-2) 0;
 }
+
+.shoppingListBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  width: 100%;
+  padding: var(--spacing-3);
+  background: color-mix(in srgb, var(--success) 12%, var(--card));
+  border: 1px solid color-mix(in srgb, var(--success) 30%, var(--border));
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-align: left;
+  color: var(--foreground);
+  transition: border-color var(--animation-duration-fast) ease;
+}
+
+.shoppingListBanner:hover {
+  border-color: var(--success);
+}
+
+.shoppingListBanner svg {
+  flex-shrink: 0;
+  color: var(--success);
+}
+
+.shoppingListBannerSunday {
+  background: color-mix(in srgb, var(--primary) 14%, var(--card));
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+.shoppingListBannerSunday svg {
+  color: var(--primary);
+}
+
+.shoppingListBannerText {
+  display: flex;
+  flex-direction: column;
+}
+
+.shoppingListBannerTitle {
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+
+.shoppingListBannerSubtitle {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.shoppingListTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.shoppingListItems {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.shoppingListItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+  padding: var(--spacing-2) var(--spacing-3);
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+}
+
+.shoppingListItemName {
+  color: var(--foreground);
+}
+
+.shoppingListItemAmount {
+  color: var(--muted-foreground);
+  font-weight: 600;
+  white-space: nowrap;
+}

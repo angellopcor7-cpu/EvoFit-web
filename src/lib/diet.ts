@@ -113,6 +113,11 @@ export const DIET_PROTEIN_TYPE_LABEL: Record<DietProteinType, string> = {
   ninguna: "Sin proteína específica",
 };
 
+export type MealIngredient = {
+  name: string;
+  amount: string;
+};
+
 export type DietMealOption = {
   id: string;
   dietStyle: DietStyle;
@@ -126,6 +131,7 @@ export type DietMealOption = {
   carbsG: number;
   fatG: number;
   orderIndex: number;
+  ingredients: MealIngredient[];
 };
 
 export type DietMealOptionRow = {
@@ -141,6 +147,7 @@ export type DietMealOptionRow = {
   carbs_g: number;
   fat_g: number;
   order_index: number;
+  ingredients: MealIngredient[] | null;
 };
 
 export function mapMealOptionRow(row: DietMealOptionRow): DietMealOption {
@@ -157,6 +164,7 @@ export function mapMealOptionRow(row: DietMealOptionRow): DietMealOption {
     carbsG: row.carbs_g,
     fatG: row.fat_g,
     orderIndex: row.order_index,
+    ingredients: row.ingredients ?? [],
   };
 }
 
@@ -186,6 +194,7 @@ export type DietPlan = {
   updatedAt: string;
   proteinPreferences: DietProteinType[];
   mealsGeneratedOn: string;
+  weekStartDate: string | null;
   meals: DietPlanMeal[];
 };
 
@@ -203,6 +212,7 @@ export type DietPlanRow = {
   updated_at: string;
   protein_preferences: string[];
   meals_generated_on: string;
+  week_start_date: string | null;
   user_diet_plan_meals: {
     id: string;
     meal_slot: string;
@@ -231,6 +241,7 @@ export function mapDietPlanRow(row: DietPlanRow): DietPlan {
     updatedAt: row.updated_at,
     proteinPreferences: (row.protein_preferences ?? []) as DietProteinType[],
     mealsGeneratedOn: row.meals_generated_on,
+    weekStartDate: row.week_start_date,
     meals: [...row.user_diet_plan_meals]
       .sort((a, b) => a.order_index - b.order_index)
       .map((m) => ({
@@ -330,4 +341,183 @@ export function pickMealsForPlan(
       fatG: choice.fatG,
     };
   });
+}
+
+// La semana de dieta corre domingo→sábado, igual que el plan semanal de
+// entrenamientos (day_of_week 0 = domingo). Así, cada domingo arranca una
+// semana nueva y se regenera el menú completo con su lista de compras.
+export function getWeekStartDate(date: Date = new Date()): string {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - d.getDay());
+  return d.toISOString().slice(0, 10);
+}
+
+export type WeeklyDietMeal = {
+  id: string;
+  dayOfWeek: number;
+  mealSlot: DietMealSlot;
+  orderIndex: number;
+  name: string;
+  description: string;
+  kcal: number;
+  proteinG: number;
+  carbsG: number;
+  fatG: number;
+  ingredients: MealIngredient[];
+};
+
+export type WeeklyDietMealRow = {
+  id: string;
+  day_of_week: number;
+  meal_slot: string;
+  order_index: number;
+  name: string;
+  description: string;
+  kcal: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+  ingredients: MealIngredient[] | null;
+};
+
+export function mapWeeklyDietMealRow(row: WeeklyDietMealRow): WeeklyDietMeal {
+  return {
+    id: row.id,
+    dayOfWeek: row.day_of_week,
+    mealSlot: row.meal_slot as DietMealSlot,
+    orderIndex: row.order_index,
+    name: row.name,
+    description: row.description,
+    kcal: row.kcal,
+    proteinG: row.protein_g,
+    carbsG: row.carbs_g,
+    fatG: row.fat_g,
+    ingredients: row.ingredients ?? [],
+  };
+}
+
+export type NewWeeklyMealInput = NewPlanMealInput & {
+  dayOfWeek: number;
+  ingredients: MealIngredient[];
+};
+
+// Arma los 7 días (domingo a sábado) × comidas por día para toda la
+// semana, evitando repetir el mismo platillo en un mismo slot dentro de
+// la semana mientras el catálogo lo permita.
+export function pickWeeklyMealsForPlan(
+  options: DietMealOption[],
+  proteinPreferences: DietProteinType[],
+  allergyTerms: string[] = [],
+): NewWeeklyMealInput[] {
+  const result: NewWeeklyMealInput[] = [];
+  const usedNamesBySlot: Record<string, string[]> = {};
+
+  for (let day = 0; day < 7; day++) {
+    const dayMeals = pickMealsForPlan(
+      options,
+      proteinPreferences,
+      Object.values(usedNamesBySlot).flat(),
+      allergyTerms,
+    );
+    for (const meal of dayMeals) {
+      const chosenOption = options.find(
+        (o) => o.name === meal.name && o.mealSlot === meal.mealSlot,
+      );
+      usedNamesBySlot[meal.mealSlot] = [
+        ...(usedNamesBySlot[meal.mealSlot] ?? []),
+        meal.name,
+      ];
+      result.push({
+        ...meal,
+        dayOfWeek: day,
+        ingredients: chosenOption?.ingredients ?? [],
+      });
+    }
+  }
+  return result;
+}
+
+// Junta los ingredientes de todas las comidas de la semana en una sola
+// lista de compras, sumando cantidades cuando comparten unidad (ej. dos
+// comidas con "150 g" de pollo se convierten en "300 g de pollo").
+export type ShoppingListItem = {
+  name: string;
+  amount: string;
+};
+
+function parseAmount(amount: string): { value: number; unit: string } | null {
+  const match = amount.trim().match(/^([\d/.]+)\s*(.*)$/);
+  if (!match) return null;
+  const [, numStr, unitRaw] = match;
+  let value: number;
+  if (numStr.includes("/")) {
+    const [num, den] = numStr.split("/").map(Number);
+    if (!den) return null;
+    value = num / den;
+  } else {
+    value = Number(numStr);
+  }
+  if (Number.isNaN(value)) return null;
+  const unit = unitRaw.trim().toLowerCase();
+  return { value, unit };
+}
+
+function formatAmount(value: number, unit: string): string {
+  const rounded = Math.round(value * 100) / 100;
+  const numStr = Number.isInteger(rounded) ? String(rounded) : String(rounded);
+  if (!unit) return numStr;
+  // Unidades que no cambian con el plural (gramos, mililitros, etc.)
+  const invariable = ["g", "gr", "kg", "ml", "l"];
+  const singularUnit = unit.replace(/s$/, "");
+  if (invariable.includes(unit)) return `${numStr} ${unit}`;
+  const displayUnit = rounded === 1 ? singularUnit : `${singularUnit}s`;
+  return `${numStr} ${displayUnit}`;
+}
+
+export function buildShoppingList(meals: WeeklyDietMeal[]): ShoppingListItem[] {
+  const groups = new Map<string, { total: number; unit: string } | null>();
+  const rawOccurrences = new Map<string, string[]>();
+
+  for (const meal of meals) {
+    for (const ing of meal.ingredients) {
+      const key = ing.name;
+      if (!rawOccurrences.has(key)) rawOccurrences.set(key, []);
+      rawOccurrences.get(key)!.push(ing.amount);
+
+      const parsed = parseAmount(ing.amount);
+      const existing = groups.has(key) ? groups.get(key) : undefined;
+      if (existing === null) continue; // ya se marcó como no sumable
+      if (!parsed) {
+        groups.set(key, null);
+        continue;
+      }
+      if (!existing) {
+        groups.set(key, { total: parsed.value, unit: parsed.unit });
+      } else if (existing.unit === parsed.unit) {
+        groups.set(key, { total: existing.total + parsed.value, unit: existing.unit });
+      } else {
+        groups.set(key, null); // unidades distintas, no se puede sumar limpio
+      }
+    }
+  }
+
+  const items: ShoppingListItem[] = [];
+  for (const [name, sum] of groups) {
+    if (sum) {
+      items.push({ name, amount: formatAmount(sum.total, sum.unit) });
+    } else {
+      const occurrences = rawOccurrences.get(name) ?? [];
+      const uniqueAmounts = Array.from(new Set(occurrences));
+      items.push({
+        name,
+        amount:
+          uniqueAmounts.length === 1
+            ? `${uniqueAmounts[0]} × ${occurrences.length}`
+            : `${occurrences.length}×`,
+      });
+    }
+  }
+
+  return items.sort((a, b) => a.name.localeCompare(b.name, "es"));
 }
