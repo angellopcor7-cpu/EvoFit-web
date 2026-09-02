@@ -456,7 +456,9 @@ export default function DietaPage() {
             {(shoppingListData?.items ?? []).map((item) => (
               <div key={item.name} className={styles.shoppingListItem}>
                 <span className={styles.shoppingListItemName}>{item.name}</span>
-                <span className={styles.shoppingListItemAmount}>{item.amount}</span>
+                {item.amount && (
+                  <span className={styles.shoppingListItemAmount}>{item.amount}</span>
+                )}
               </div>
             ))}
           </div>

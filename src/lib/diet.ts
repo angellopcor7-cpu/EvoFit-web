@@ -113,10 +113,7 @@ export const DIET_PROTEIN_TYPE_LABEL: Record<DietProteinType, string> = {
   ninguna: "Sin proteína específica",
 };
 
-export type MealIngredient = {
-  name: string;
-  amount: string;
-};
+export type MealIngredient = string;
 
 export type DietMealOption = {
   id: string;
@@ -439,85 +436,36 @@ export function pickWeeklyMealsForPlan(
 }
 
 // Junta los ingredientes de todas las comidas de la semana en una sola
-// lista de compras, sumando cantidades cuando comparten unidad (ej. dos
-// comidas con "150 g" de pollo se convierten en "300 g de pollo").
+// lista de compras. Cada ingrediente ya viene como una línea completa
+// (ej. "150 g de pechuga de pollo"); si la misma línea se repite varias
+// veces en la semana, se muestra una sola vez con cuántas veces se
+// necesita en total, en vez de tratar de sumar cantidades en texto libre.
 export type ShoppingListItem = {
   name: string;
   amount: string;
 };
 
-function parseAmount(amount: string): { value: number; unit: string } | null {
-  const match = amount.trim().match(/^([\d/.]+)\s*(.*)$/);
-  if (!match) return null;
-  const [, numStr, unitRaw] = match;
-  let value: number;
-  if (numStr.includes("/")) {
-    const [num, den] = numStr.split("/").map(Number);
-    if (!den) return null;
-    value = num / den;
-  } else {
-    value = Number(numStr);
-  }
-  if (Number.isNaN(value)) return null;
-  const unit = unitRaw.trim().toLowerCase();
-  return { value, unit };
-}
-
-function formatAmount(value: number, unit: string): string {
-  const rounded = Math.round(value * 100) / 100;
-  const numStr = Number.isInteger(rounded) ? String(rounded) : String(rounded);
-  if (!unit) return numStr;
-  // Unidades que no cambian con el plural (gramos, mililitros, etc.)
-  const invariable = ["g", "gr", "kg", "ml", "l"];
-  const singularUnit = unit.replace(/s$/, "");
-  if (invariable.includes(unit)) return `${numStr} ${unit}`;
-  const displayUnit = rounded === 1 ? singularUnit : `${singularUnit}s`;
-  return `${numStr} ${displayUnit}`;
-}
-
 export function buildShoppingList(meals: WeeklyDietMeal[]): ShoppingListItem[] {
-  const groups = new Map<string, { total: number; unit: string } | null>();
-  const rawOccurrences = new Map<string, string[]>();
+  const counts = new Map<string, { display: string; count: number }>();
 
   for (const meal of meals) {
-    for (const ing of meal.ingredients) {
-      const key = ing.name;
-      if (!rawOccurrences.has(key)) rawOccurrences.set(key, []);
-      rawOccurrences.get(key)!.push(ing.amount);
-
-      const parsed = parseAmount(ing.amount);
-      const existing = groups.has(key) ? groups.get(key) : undefined;
-      if (existing === null) continue; // ya se marcó como no sumable
-      if (!parsed) {
-        groups.set(key, null);
-        continue;
-      }
-      if (!existing) {
-        groups.set(key, { total: parsed.value, unit: parsed.unit });
-      } else if (existing.unit === parsed.unit) {
-        groups.set(key, { total: existing.total + parsed.value, unit: existing.unit });
+    for (const line of meal.ingredients) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      const key = normalizeText(trimmed);
+      const existing = counts.get(key);
+      if (existing) {
+        existing.count += 1;
       } else {
-        groups.set(key, null); // unidades distintas, no se puede sumar limpio
+        counts.set(key, { display: trimmed, count: 1 });
       }
     }
   }
 
-  const items: ShoppingListItem[] = [];
-  for (const [name, sum] of groups) {
-    if (sum) {
-      items.push({ name, amount: formatAmount(sum.total, sum.unit) });
-    } else {
-      const occurrences = rawOccurrences.get(name) ?? [];
-      const uniqueAmounts = Array.from(new Set(occurrences));
-      items.push({
-        name,
-        amount:
-          uniqueAmounts.length === 1
-            ? `${uniqueAmounts[0]} × ${occurrences.length}`
-            : `${occurrences.length}×`,
-      });
-    }
-  }
-
-  return items.sort((a, b) => a.name.localeCompare(b.name, "es"));
+  return Array.from(counts.values())
+    .map(({ display, count }) => ({
+      name: display,
+      amount: count > 1 ? `× ${count}` : "",
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, "es"));
 }
