@@ -392,6 +392,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--spacing-3);
+  padding-right: 2.25rem;
 }
 
 .shoppingListDialogTitle {
@@ -448,6 +449,13 @@
   gap: var(--spacing-2);
 }
 
+.mealsWeekHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+}
+
 .mealsWeekTitle {
   margin: 0;
   font-size: 0.8rem;
@@ -455,6 +463,34 @@
   color: var(--muted-foreground);
   text-transform: uppercase;
   letter-spacing: 0.03em;
+}
+
+.shoppingIconButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.4rem 0.7rem;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--success) 30%, var(--card)),
+    color-mix(in srgb, var(--success) 14%, var(--card))
+  );
+  border: 1px solid color-mix(in srgb, var(--success) 40%, var(--border));
+  border-radius: var(--radius-full);
+  color: var(--success);
+  cursor: pointer;
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--success) 20%, transparent);
+  transition: transform var(--animation-duration-fast) ease, border-color var(--animation-duration-fast) ease;
+}
+
+.shoppingIconButton:hover {
+  border-color: var(--success);
+  transform: translateY(-1px);
+}
+
+.shoppingIconButtonCount {
+  font-size: 0.7rem;
+  font-weight: 700;
 }
 
 .mealsWeekList {

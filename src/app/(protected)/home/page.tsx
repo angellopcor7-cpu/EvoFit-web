@@ -344,7 +344,10 @@ export default function HomePage() {
                 onClick={() => setShoppingListOpen(true)}
                 aria-label="Ver lista de compras"
               >
-                <ShoppingCart size={16} />
+                <ShoppingCart size={15} />
+                <span className={styles.shoppingIconButtonCount}>
+                  {shoppingListData.items.length}
+                </span>
               </button>
             )}
           </div>

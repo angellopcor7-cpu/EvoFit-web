@@ -365,6 +365,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--spacing-3);
+  padding-right: 2.25rem;
 }
 
 .shoppingListTitle {
