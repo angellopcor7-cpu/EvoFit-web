@@ -129,6 +129,7 @@ export type DietMealOption = {
   fatG: number;
   orderIndex: number;
   ingredients: MealIngredient[];
+  prepSteps: string[];
 };
 
 export type DietMealOptionRow = {
@@ -145,6 +146,7 @@ export type DietMealOptionRow = {
   fat_g: number;
   order_index: number;
   ingredients: MealIngredient[] | null;
+  prep_steps: string[] | null;
 };
 
 export function mapMealOptionRow(row: DietMealOptionRow): DietMealOption {
@@ -162,6 +164,7 @@ export function mapMealOptionRow(row: DietMealOptionRow): DietMealOption {
     fatG: row.fat_g,
     orderIndex: row.order_index,
     ingredients: row.ingredients ?? [],
+    prepSteps: row.prep_steps ?? [],
   };
 }
 
@@ -175,6 +178,7 @@ export type DietPlanMeal = {
   proteinG: number;
   carbsG: number;
   fatG: number;
+  prepSteps: string[];
 };
 
 export type DietPlan = {
@@ -220,6 +224,7 @@ export type DietPlanRow = {
     protein_g: number;
     carbs_g: number;
     fat_g: number;
+    prep_steps: string[] | null;
   }[];
 };
 
@@ -251,6 +256,7 @@ export function mapDietPlanRow(row: DietPlanRow): DietPlan {
         proteinG: m.protein_g,
         carbsG: m.carbs_g,
         fatG: m.fat_g,
+        prepSteps: m.prep_steps ?? [],
       })),
   };
 }
@@ -264,6 +270,7 @@ export type NewPlanMealInput = {
   proteinG: number;
   carbsG: number;
   fatG: number;
+  prepSteps: string[];
 };
 
 const DIACRITICS_REGEX = new RegExp("[\\u0300-\\u036f]", "g");
@@ -336,6 +343,7 @@ export function pickMealsForPlan(
       proteinG: choice.proteinG,
       carbsG: choice.carbsG,
       fatG: choice.fatG,
+      prepSteps: choice.prepSteps,
     };
   });
 }

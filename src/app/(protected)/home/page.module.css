@@ -318,3 +318,190 @@
   flex-shrink: 0;
   color: var(--secondary);
 }
+
+.shoppingCard {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  width: 100%;
+  padding: var(--spacing-3) var(--spacing-4);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--success) 16%, var(--card)),
+    var(--card)
+  );
+  border: 1px solid color-mix(in srgb, var(--success) 32%, var(--border));
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  text-align: left;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--success) 12%, transparent);
+  transition: border-color var(--animation-duration-fast) ease, transform var(--animation-duration-fast) ease;
+}
+
+.shoppingCard:hover {
+  border-color: var(--success);
+  transform: translateY(-1px);
+}
+
+.shoppingCardIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--success) 25%, var(--card));
+  color: var(--success);
+}
+
+.shoppingCardInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.shoppingCardEyebrow {
+  margin: 0 0 2px;
+  color: var(--success);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.shoppingCardTitle {
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--foreground);
+}
+
+.shoppingCardSubtitle {
+  margin: 2px 0 0;
+  font-size: 0.76rem;
+  color: var(--muted-foreground);
+}
+
+.shoppingCardArrow {
+  flex-shrink: 0;
+  color: var(--muted-foreground);
+}
+
+.shoppingListDialogTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.shoppingListDialogItems {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.shoppingListDialogItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+  padding: var(--spacing-2) var(--spacing-3);
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+}
+
+.shoppingListDialogItemName {
+  color: var(--foreground);
+}
+
+.shoppingListDialogItemAmount {
+  color: var(--muted-foreground);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.mealsWeekSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.mealsWeekTitle {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.mealsWeekList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.mealsWeekRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3) var(--spacing-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid transparent;
+  transition: opacity var(--animation-duration-fast) ease;
+}
+
+.mealsWeekRowDimmed {
+  background: var(--surface);
+  border-color: var(--border);
+  opacity: 0.5;
+  filter: saturate(0.6);
+}
+
+.mealsWeekRowToday {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--secondary) 20%, var(--card)),
+    color-mix(in srgb, var(--accent) 12%, var(--card))
+  );
+  border-color: color-mix(in srgb, var(--secondary) 45%, var(--border));
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--secondary) 16%, transparent);
+}
+
+.mealsWeekDay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  width: 2.5rem;
+  padding-top: 2px;
+  font-family: var(--font-family-display);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--foreground);
+  text-transform: uppercase;
+}
+
+.mealsWeekDishes {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.mealsWeekDish {
+  font-size: 0.78rem;
+  color: var(--foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mealsWeekSlotLabel {
+  color: var(--muted-foreground);
+  font-weight: 600;
+}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, RefreshCw, Flame, Beef, Wheat, Droplet, ShieldAlert, Clock3, ShoppingCart } from "lucide-react";
+import { ArrowLeft, RefreshCw, Flame, Beef, Wheat, Droplet, ShieldAlert, Clock3, ShoppingCart, ChefHat } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
@@ -66,6 +66,7 @@ export default function DietaPage() {
   const allergies = profile?.allergies?.trim() || null;
   const { data: shoppingListData } = useWeeklyShoppingList(data?.plan?.id);
   const [shoppingListOpen, setShoppingListOpen] = useState(false);
+  const [expandedPrepIds, setExpandedPrepIds] = useState<Set<string>>(new Set());
   const isSunday = new Date().getDay() === 0;
 
   const [step, setStep] = useState<Step | null>(null);
@@ -387,6 +388,34 @@ export default function DietaPage() {
                       <Flame size={12} /> {meal.kcal} kcal · P {meal.proteinG}g · C{" "}
                       {meal.carbsG}g · G {meal.fatG}g
                     </p>
+                    {meal.prepSteps.length > 0 && (
+                      <>
+                        <button
+                          type="button"
+                          className={styles.mealPrepToggle}
+                          onClick={() =>
+                            setExpandedPrepIds((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(meal.id)) next.delete(meal.id);
+                              else next.add(meal.id);
+                              return next;
+                            })
+                          }
+                        >
+                          <ChefHat size={13} />
+                          {expandedPrepIds.has(meal.id)
+                            ? "Ocultar preparación"
+                            : "Cómo prepararlo"}
+                        </button>
+                        {expandedPrepIds.has(meal.id) && (
+                          <ol className={styles.mealPrepList}>
+                            {meal.prepSteps.map((step, i) => (
+                              <li key={i}>{step}</li>
+                            ))}
+                          </ol>
+                        )}
+                      </>
+                    )}
                   </div>
                 );
               })}

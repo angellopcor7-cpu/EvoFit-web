@@ -112,6 +112,7 @@ export async function POST(request: Request) {
           protein_g: meal.proteinG,
           carbs_g: meal.carbsG,
           fat_g: meal.fatG,
+          prep_steps: meal.prepSteps,
         })),
       )
       .select();
@@ -166,6 +167,7 @@ export async function POST(request: Request) {
             proteinG: m.protein_g,
             carbsG: m.carbs_g,
             fatG: m.fat_g,
+            prepSteps: m.prep_steps ?? [],
           })),
       },
     });

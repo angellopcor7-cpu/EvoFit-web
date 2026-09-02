@@ -12,19 +12,34 @@ import {
   Check,
   CalendarDays,
   Clock3,
+  ShoppingCart,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/Dialog";
 import {
   useAuthSession,
   useMarkHomeTutorialSeen,
 } from "@/hooks/useProfile";
 import { SpotlightTour, type TourStep } from "@/components/SpotlightTour";
-import { useDietPlan } from "@/hooks/useDietPlan";
+import { useDietPlan, useWeeklyShoppingList } from "@/hooks/useDietPlan";
 import { useWorkoutStats } from "@/hooks/useWorkoutCompletions";
 import { useWeeklyPlan } from "@/hooks/useWeeklyPlan";
 import { useWorkoutRoutines } from "@/hooks/useWorkoutRoutines";
 import { useUserRoutines } from "@/hooks/useUserRoutines";
-import { DIET_GOAL_LABEL, CURRENT_SLOT_LABEL, getCurrentMealSlot } from "@/lib/diet";
+import {
+  DIET_GOAL_LABEL,
+  DIET_MEAL_SLOT_LABEL,
+  CURRENT_SLOT_LABEL,
+  getCurrentMealSlot,
+} from "@/lib/diet";
+import { notifyLocal } from "@/lib/localNotify";
 import {
   computeDayRoutinePlan,
   DAY_ORDER,
@@ -43,6 +58,7 @@ export default function HomePage() {
   const markHomeTutorialSeen = useMarkHomeTutorialSeen();
   const { data: dietData } = useDietPlan();
   const dietPlan = dietData?.plan ?? null;
+  const { data: shoppingListData } = useWeeklyShoppingList(dietPlan?.id);
   const { data: stats } = useWorkoutStats();
   const { data: planData } = useWeeklyPlan();
   const { data: routinesData } = useWorkoutRoutines();
@@ -54,6 +70,8 @@ export default function HomePage() {
   const ctaCardRef = useRef<HTMLDivElement>(null);
   const planLinkRef = useRef<HTMLAnchorElement>(null);
   const dietCardRef = useRef<HTMLAnchorElement>(null);
+  const mealsWeekRef = useRef<HTMLDivElement>(null);
+  const [shoppingListOpen, setShoppingListOpen] = useState(false);
   const [currentMealSlot, setCurrentMealSlot] = useState<
     "desayuno" | "comida" | "cena" | "ayuno" | null
   >(null);
@@ -67,6 +85,23 @@ export default function HomePage() {
     }, 60_000);
     return () => clearInterval(interval);
   }, [fastingMode, fastingEndTime]);
+
+  // Avisa cuando empieza cada comida (desayuno/comida/cena) mientras la
+  // app está abierta — solo una vez por comida por día (se guarda en
+  // localStorage). No es una notificación push real, así que solo llega
+  // si tienes EvoFit abierto en ese momento.
+  useEffect(() => {
+    if (!currentMealSlot || currentMealSlot === "ayuno") return;
+    if (typeof window === "undefined") return;
+    const key = `evofit-meal-notify-${todayStr()}-${currentMealSlot}`;
+    if (window.localStorage.getItem(key)) return;
+    window.localStorage.setItem(key, "1");
+    const label = CURRENT_SLOT_LABEL[currentMealSlot];
+    notifyLocal(
+      `¡Ha comenzado tu ${label.toLowerCase()}! 🍽️`,
+      "Abre EvoFit para ver tu menú de hoy.",
+    );
+  }, [currentMealSlot]);
 
   const trainedToday = profile?.lastActiveDate === todayStr();
 
@@ -86,6 +121,14 @@ export default function HomePage() {
       isToday: dayOfWeek === todayDow,
       plan: computeDayRoutinePlan(entry, allRoutines, myRoutines),
     };
+  });
+
+  const weeklyMeals = shoppingListData?.meals ?? [];
+  const mealsWeekRows = DAY_ORDER.map((dayOfWeek) => {
+    const dayMeals = weeklyMeals
+      .filter((m) => m.dayOfWeek === dayOfWeek)
+      .sort((a, b) => a.orderIndex - b.orderIndex);
+    return { dayOfWeek, isToday: dayOfWeek === todayDow, meals: dayMeals };
   });
 
   const daysSinceLastActive = profile?.lastActiveDate
@@ -288,6 +331,59 @@ export default function HomePage() {
         <ArrowRight size={22} className={styles.dietCardArrow} />
       </Link>
 
+      {shoppingListData && shoppingListData.items.length > 0 && (
+        <button
+          type="button"
+          className={styles.shoppingCard}
+          onClick={() => setShoppingListOpen(true)}
+        >
+          <div className={styles.shoppingCardIcon}>
+            <ShoppingCart size={22} />
+          </div>
+          <div className={styles.shoppingCardInfo}>
+            <p className={styles.shoppingCardEyebrow}>Lista de compras</p>
+            <p className={styles.shoppingCardTitle}>
+              {shoppingListData.items.length} ingredientes esta semana
+            </p>
+            <p className={styles.shoppingCardSubtitle}>
+              De domingo a sábado — toca para verla
+            </p>
+          </div>
+          <ChevronRight size={20} className={styles.shoppingCardArrow} />
+        </button>
+      )}
+
+      {weeklyMeals.length > 0 && (
+        <div className={styles.mealsWeekSection} ref={mealsWeekRef}>
+          <p className={styles.mealsWeekTitle}>Tu semana de comidas</p>
+          <div className={styles.mealsWeekList}>
+            {mealsWeekRows.map(({ dayOfWeek, isToday, meals }) => (
+              <div
+                key={dayOfWeek}
+                className={`${styles.mealsWeekRow} ${
+                  isToday ? styles.mealsWeekRowToday : styles.mealsWeekRowDimmed
+                }`}
+              >
+                <span className={styles.mealsWeekDay}>
+                  {DAY_OF_WEEK_SHORT[dayOfWeek]}
+                  {isToday && <span className={styles.weekTodayBadge}>Hoy</span>}
+                </span>
+                <span className={styles.mealsWeekDishes}>
+                  {meals.map((m) => (
+                    <span key={m.id} className={styles.mealsWeekDish}>
+                      <span className={styles.mealsWeekSlotLabel}>
+                        {DIET_MEAL_SLOT_LABEL[m.mealSlot]}:
+                      </span>{" "}
+                      {m.name}
+                    </span>
+                  ))}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {hasAnyPlan && (
         <div className={styles.weekList}>
           {weekRows.map(({ dayOfWeek, isToday, plan }) => {
@@ -338,6 +434,29 @@ export default function HomePage() {
           onNeverShowAgain={handleTourNeverShowAgain}
         />
       )}
+
+      <Dialog open={shoppingListOpen} onOpenChange={setShoppingListOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className={styles.shoppingListDialogTitle}>
+              <ShoppingCart size={18} /> Lista de compras de la semana
+            </DialogTitle>
+            <DialogDescription>
+              Ingredientes de todas tus comidas de domingo a sábado.
+            </DialogDescription>
+          </DialogHeader>
+          <div className={styles.shoppingListDialogItems}>
+            {(shoppingListData?.items ?? []).map((item) => (
+              <div key={item.name} className={styles.shoppingListDialogItem}>
+                <span className={styles.shoppingListDialogItemName}>{item.name}</span>
+                {item.amount && (
+                  <span className={styles.shoppingListDialogItemAmount}>{item.amount}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
